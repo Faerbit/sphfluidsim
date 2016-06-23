@@ -55,6 +55,7 @@ public:
     void release();
     void bindTextureUnit(TextureType type, int textureUnit);
     void setMatrices(QMatrix4x4 vpMatrix, QMatrix4x4 mMatrix);
+    void setMatrices_no_mult(QMatrix4x4 vpMatrix, QMatrix4x4 mMatrix);
     void enableAttribs();
     void disableAttribs();
     void setAttribFormat(AttribType attrType, GLenum eleType, int offset,

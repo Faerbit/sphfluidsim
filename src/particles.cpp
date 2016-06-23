@@ -19,7 +19,7 @@ void Particles::render(ShaderProgram* program, QMatrix4x4 vpMatrix) {
     QMatrix4x4 modelMatrix;
     modelMatrix.translate(basePosition);
     modelMatrix.scale(scale);
-    program->setMatrices(vpMatrix, modelMatrix);
+    program->setMatrices_no_mult(vpMatrix, modelMatrix);
     ptr->vbo.bind();
     ptr->ibo.bind();
 

@@ -1,6 +1,6 @@
 #version 330
 
-uniform mat4 mvpMatrix;
+uniform mat4 vpMatrix;
 uniform mat3 normalMatrix;
 uniform mat4 modelMatrix;
 in vec4 vert;
@@ -12,5 +12,5 @@ void main()
 {
     fragPos = modelMatrix * vert;
     fragNormal = normalize(normalMatrix * vec3(normal));
-    gl_Position = mvpMatrix * vert;
+    gl_Position = vpMatrix * modelMatrix * vert;
 }

@@ -57,7 +57,7 @@ void GLWidget::initializeGL () {
     glClearDepth(1.0f);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     defaultShaderProgram = ShaderProgram("noTexture.vert", "noTexture.frag",
-            "vert", "normal", "texCoord", "texture", "mvpMatrix",
+            "vert", "normal", "texCoord", "texture", "vpMatrix",
             "modelMatrix", "normalMatrix");
 
     camera = Camera(QVector3D(0.0f, 10.0f, -10.0f),

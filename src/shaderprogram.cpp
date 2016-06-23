@@ -127,6 +127,12 @@ void ShaderProgram::setMatrices(QMatrix4x4 vpMatrix, QMatrix4x4 mMatrix) {
     shaderProgram->setUniformValue(modelUniform, mMatrix);
 }
 
+void ShaderProgram::setMatrices_no_mult(QMatrix4x4 vpMatrix, QMatrix4x4 mMatrix) {
+    shaderProgram->setUniformValue(mvpUniform, vpMatrix);
+    shaderProgram->setUniformValue(normalMatrixUniform, mMatrix.normalMatrix());
+    shaderProgram->setUniformValue(modelUniform, mMatrix);
+}
+
 void ShaderProgram::enableAttribs() {
     shaderProgram->enableAttributeArray(vertexAttrib);
     shaderProgram->enableAttributeArray(normalAttrib);
