@@ -9,9 +9,7 @@
 
 #include "shaderprogram.h"
 #include "camera.h"
-#include "planet.h"
-    
-using planet = std::shared_ptr<Planet>;
+#include "particles.h"
 
 class GLWidget : public QOpenGLWidget {
     Q_OBJECT
@@ -38,25 +36,19 @@ private:
 private:
     QOpenGLDebugLogger* logger = nullptr;
     ShaderProgram defaultShaderProgram;
-    ShaderProgram sunShaderProgram;
-    ShaderProgram normalShaderProgram;
-    ShaderProgram noTextureShaderProgram;
+    void load();
 
     QTimer timer;
     TimePoint start;
 
     Camera camera;
 
-    planet sun;
-    std::vector<planet> planets;
+    Particles particles;
 
     int width;
     int height;
 
     float aspect = 0.0f;
-
-    bool paintNormals;
-    bool renderBunnies;
 };
 
 #endif // GLWIDGET_H

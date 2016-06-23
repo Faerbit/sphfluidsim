@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.11)
 
-project(solar-system)
+project(sphfluidsim)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -29,6 +29,6 @@ set(LIBRARIES ${LIBRARIES} ${QT_LIBRARIES})
 set(LIBRARIES ${LIBRARIES} ${OPENGL_LIBRARIES})
 set(LIBRARIES ${LIBRARIES} ${ASSIMP_LIBRARIES})
 
-add_executable(solar-system ${SOURCE_FILES} ${HEADER_FILES})
-qt5_use_modules(solar-system Widgets OpenGL)
-target_link_libraries(solar-system ${LIBRARIES})
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
+qt5_use_modules(${PROJECT_NAME} Widgets OpenGL)
+target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
