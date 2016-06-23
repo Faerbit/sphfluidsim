@@ -44,7 +44,7 @@ void Camera::moveUp(float distance) {
 
 void Camera::pan(float xAngle, float yAngle) {
     // prevent gimbal lock
-    if (this->yAngle + yAngle > 89.0f || this->yAngle + yAngle < -89.0f) {
+    if (this->yAngle + yAngle > 89.99f || this->yAngle + yAngle < -89.99f) {
         yAngle = 0.0f;
     }
     else {
@@ -60,4 +60,8 @@ void Camera::pan(float xAngle, float yAngle) {
 void Camera::reset() {
     position = resetPosition;
     orientation = resetOrientation;
+}
+
+QVector3D Camera::getPosition() {
+    return position;
 }

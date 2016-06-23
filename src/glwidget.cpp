@@ -58,7 +58,7 @@ void GLWidget::initializeGL () {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     defaultShaderProgram = ShaderProgram("noTexture.vert", "noTexture.frag",
             "vert", "normal", "texCoord", "texture", "vpMatrix",
-            "modelMatrix", "normalMatrix");
+            "modelMatrix", "normalMatrix", "cameraPos");
 
     camera = Camera(QVector3D(0.0f, 10.0f, -10.0f),
                     QVector3D(0.0f, -1.0f, 1.0f));
@@ -94,6 +94,7 @@ void GLWidget::paintGL() {
     vpMatrix = vpMatrix * camera.viewMatrix();
 
     defaultShaderProgram.bind();
+    defaultShaderProgram.setCameraPos(camera.getPosition());
     particles.render(&defaultShaderProgram, vpMatrix);
     defaultShaderProgram.release();
 }

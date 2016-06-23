@@ -3,6 +3,7 @@
 
 #include <QOpenGLShaderProgram>
 #include <QMatrix4x4>
+#include <QVector3D>
 #include <memory>
 #include <chrono>
 
@@ -30,7 +31,8 @@ public:
             std::string normalAttribName,
             std::string mvpUniformName,
             std::string mMatrixUniformName,
-            std::string normalMatrixUniformName);
+            std::string normalMatrixUniformName,
+            std::string cameraPosUniformName);
     ShaderProgram(std::string vertexShaderFilePath,
             std::string fragmentShaderFilePath,
             std::string vertexAttribName,
@@ -39,7 +41,8 @@ public:
             std::string textureUniformName,
             std::string mvpUniformName,
             std::string mMatrixUniformName,
-            std::string normalMatrixUniformName);
+            std::string normalMatrixUniformName,
+            std::string cameraPosUniformName);
     ShaderProgram(std::string vertexShaderFilePath,
             std::string fragmentShaderFilePath,
             std::string vertexAttribName,
@@ -50,7 +53,8 @@ public:
             std::string timeUniformName,
             std::string mvpUniformName,
             std::string mMatrixUniformName,
-            std::string normalMatrixUniformName);
+            std::string normalMatrixUniformName,
+            std::string cameraPosUniformName);
     void bind();
     void release();
     void bindTextureUnit(TextureType type, int textureUnit);
@@ -61,6 +65,7 @@ public:
     void setAttribFormat(AttribType attrType, GLenum eleType, int offset,
             int tupleSize, int stride);
     void setTime(Time time);
+    void setCameraPos(QVector3D cameraPos);
 private:
     int getLocation(LocType type, std::string attribName);
     std::unique_ptr<QOpenGLShaderProgram> shaderProgram;
@@ -73,6 +78,7 @@ private:
     int mvpUniform;
     int modelUniform;
     int normalMatrixUniform;
+    int cameraPosUniform;
 };
 
 #endif // SHADER_H

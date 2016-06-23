@@ -17,6 +17,7 @@ public:
     void pan(float xAngle, float yAngle);
     void reset();
     QMatrix4x4 viewMatrix();
+    QVector3D getPosition();
 private:
     QVector3D position;
     QVector3D orientation;
