@@ -1,6 +1,7 @@
 #include "mesh.h"
 #include "modelloader.h"
 #include "constants.h"
+#include "glfuncs.h"
 
 using namespace std;
 
@@ -55,7 +56,8 @@ void Mesh::render(ShaderProgram* program, bool renderTextures) {
                 stride);
     }
 
-    glDrawElements(GL_TRIANGLES, ptr->indices.size(), GL_UNSIGNED_INT, 0);
+    glFuncs::funcs()->glDrawElements(GL_TRIANGLES, ptr->indices.size(),
+            GL_UNSIGNED_INT, 0);
 
     program->disableAttribs();
 

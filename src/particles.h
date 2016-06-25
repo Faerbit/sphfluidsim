@@ -6,12 +6,8 @@
 #include "shaderprogram.h"
 #include <QVector3D>
 #include <QMatrix4x4>
-#include <chrono>
 #include <memory>
 
-using Clock = std::chrono::steady_clock;
-using TimePoint = std::chrono::time_point<Clock>;
-using Time = std::chrono::duration<float>;
 
 class Particles {
 public:

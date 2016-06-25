@@ -14,7 +14,6 @@ set(CMAKE_CXX_STANDARD 14)
 find_package(Qt5Widgets)
 find_package(Qt5OpenGL)
 find_package(Qt5Core)
-find_package(OpenGL)
 find_package(assimp)
 
 # Source Files

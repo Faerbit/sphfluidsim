@@ -37,8 +37,8 @@ void Particles::render(ShaderProgram* program, QMatrix4x4 vpMatrix) {
 
     positionsBuffer->bind();
     offset = 0;
-    stride = 3 * sizeof(GLfloat);
-    program->setAttribFormat(ShaderProgram::position, GL_FLOAT, offset, 3,
+    stride = 4 * sizeof(GLfloat);
+    program->setAttribFormat(ShaderProgram::position, GL_FLOAT, offset, 4,
             stride);
     program->enablePosition();
     glFuncs::funcs()->glVertexAttribDivisor(program->getPositionLoc(), 1);

@@ -1,4 +1,5 @@
 #include "simulation.h"
+#include "glfuncs.h"
 
 using namespace std;
 
@@ -13,18 +14,19 @@ Simulation::Simulation(float domain_size_x, float domain_size_y, float domain_si
     positionsBuffer = shared_ptr<QOpenGLBuffer>
         (new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer));
 
-    startPositions = vector<QVector3D>();
-    startPositions.push_back(QVector3D());
-    startPositions.push_back(QVector3D(0.0f, 2.0f, 0.0f));
-    startPositions.push_back(QVector3D(0.0f, 4.0f, 0.0f));
+    startPositions = vector<QVector4D>();
+    startPositions.push_back(QVector4D());
+    startPositions.push_back(QVector4D(0.0f, 2.0f, 0.0f, 0.0f));
+    startPositions.push_back(QVector4D(0.0f, 4.0f, 0.0f, 0.0f));
 
     positionsBuffer->create();
     positionsBuffer->bind();
-    // TODO use more appropritate usage pattern
-    positionsBuffer->setUsagePattern(QOpenGLBuffer::StaticDraw);
+    positionsBuffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
     positionsBuffer->allocate(
-            &startPositions[0], startPositions.size() * 3* sizeof(GLfloat));
+            &startPositions[0], startPositions.size() * 4 * sizeof(GLfloat));
     positionsBuffer->release();
+
+    computeShader = ComputeShader("pos.cmp", "time");
 }
 
 shared_ptr<QOpenGLBuffer> Simulation::getPositionsBuffer() {
@@ -33,4 +35,24 @@ shared_ptr<QOpenGLBuffer> Simulation::getPositionsBuffer() {
 
 int Simulation::getParticleCount() {
     return startPositions.size();
+}
+
+void Simulation::simulate(Time time) {
+    float fTime = time.count();
+    positionsBuffer->bind();
+    vector<GLfloat> buffer = vector<GLfloat>(12);
+    positionsBuffer->read(0, &buffer[0], 12*sizeof(GLfloat));
+    cout << "buffer: ";
+    for(auto item: buffer) {
+        cout << item << ", ";
+    }
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
+            positionsBuffer->bufferId());
+    computeShader.bind();
+    computeShader.setTime(fTime);
+    glFuncs::funcs()->glDispatchCompute(1, 1, 1);
+    glFuncs::funcs()->glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    computeShader.release();
+    cout << endl;
+    positionsBuffer->release();
 }

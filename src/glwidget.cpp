@@ -85,12 +85,12 @@ void GLWidget::resizeGL(int width, int height) {
     this->height = height;
 
     // Set viewport to cover the whole window
-    glViewport(0, 0, width, height);
+    glFuncs::funcs()->glViewport(0, 0, width, height);
 }
 
 void GLWidget::paintGL() {
     // Clear buffer to set color and alpha
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glFuncs::funcs()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     QMatrix4x4 vpMatrix;
     vpMatrix.setToIdentity();
@@ -146,6 +146,7 @@ void GLWidget::onMessageLogged(QOpenGLDebugMessage msg) {
 
 void GLWidget::_update() {
     QCursor::setPos(mapToGlobal(QPoint(width/2, height/2)));
+    simulation.simulate(Clock::now() - start);
     paintGL();
     update();
 }
