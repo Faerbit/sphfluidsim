@@ -6,12 +6,12 @@ out vec4 fragColor;
 
 uniform vec3 cameraPos;
 
-vec3 lightVector = normalize(vec3( -0.25, 1.0, 0.0));
+vec3 lightVector = normalize(vec3( -0.25, 1.0, -0.5));
 float specularFactor = 0.2;
 float diffuseFactor = 0.8;
 float ambientFactor = 0.2;
-float shininess = 250.0;
-float lightIntensity = 4.0;
+float shininess = 200.0;
+float lightIntensity = 7.5;
 vec4 color = vec4(0.0, 0.0, 1.0, 1.0);
 
 void main()
