@@ -6,11 +6,11 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QTimer>
-#include <QOpenGLFunctions_4_3_Core>
 
 #include "shaderprogram.h"
 #include "camera.h"
 #include "particles.h"
+#include "glfuncs.h"
 
 class GLWidget : public QOpenGLWidget{
     Q_OBJECT
@@ -45,8 +45,6 @@ private:
     Camera camera;
 
     Particles particles;
-
-    std::shared_ptr<QOpenGLFunctions_4_3_Core> funcs;
 
     int width;
     int height;
