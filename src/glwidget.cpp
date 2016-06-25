@@ -10,6 +10,7 @@
 #include "constants.h"
 #include "texture.h"
 #include "mesh.h"
+#include "glfuncs.h"
 
 using namespace std;
 
@@ -48,14 +49,14 @@ void GLWidget::initializeGL () {
         logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
         logger->enableMessages();
     }
-    glFuncs::funcs->glEnable(GL_DEPTH_TEST);
-    glFuncs::funcs->glEnable(GL_CULL_FACE);
-    glFuncs::funcs->glCullFace(GL_BACK);
-    glFuncs::funcs->glDepthFunc(GL_LEQUAL);
-    //glFuncs::funcs->glEnable(GL_TEXTURE_2D);
+    glFuncs::funcs()->glEnable(GL_DEPTH_TEST);
+    glFuncs::funcs()->glEnable(GL_CULL_FACE);
+    glFuncs::funcs()->glCullFace(GL_BACK);
+    glFuncs::funcs()->glDepthFunc(GL_LEQUAL);
+    //glFuncs::funcs()->glEnable(GL_TEXTURE_2D);
 
-    glFuncs::funcs->glClearDepth(1.0f);
-    glFuncs::funcs->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glFuncs::funcs()->glClearDepth(1.0f);
+    glFuncs::funcs()->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     defaultShaderProgram = ShaderProgram("noTexture.vert", "noTexture.frag",
             "vert", "normal", "position", "mvpMatrix", "modelMatrix",
             "normalMatrix", "cameraPos");
@@ -66,7 +67,10 @@ void GLWidget::initializeGL () {
 }
 
 void GLWidget::load() {
-    particles = Particles("sphere_low.obj");
+    simulation = Simulation(10.0f, 10.0f, 10.0f);
+    particles = Particles("sphere_low.obj",
+            simulation.getPositionsBuffer(),
+            simulation.getParticleCount());
 }
 
 void GLWidget::resizeGL(int width, int height) {
@@ -95,7 +99,7 @@ void GLWidget::paintGL() {
 
     defaultShaderProgram.bind();
     defaultShaderProgram.setCameraPos(camera.getPosition());
-    particles.render(&defaultShaderProgram, vpMatrix, funcs);
+    particles.render(&defaultShaderProgram, vpMatrix);
     defaultShaderProgram.release();
 }
 

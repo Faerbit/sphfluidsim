@@ -8,7 +8,7 @@
 class glFuncs {
 public:
     static std::shared_ptr<QOpenGLFunctions_4_3_Core> funcs() {
-        return instance->funcs;
+        return getInstance()._funcs;
     }
 
     glFuncs(glFuncs const&)         = delete;
@@ -19,15 +19,15 @@ private:
         return instance;
     }
     glFuncs() {
-        funcs = std::shared_ptr<QOpenGLFunctions_4_3_Core>(
+        _funcs = std::shared_ptr<QOpenGLFunctions_4_3_Core>(
                 new QOpenGLFunctions_4_3_Core());
-        if (!funcs->initializeOpenGLFunctions()) {
+        if (!_funcs->initializeOpenGLFunctions()) {
             std::cerr << "Failed to initialize OpenGL Functions." << std::endl;
             std::cerr << "Your host must support OpenGL 4.3." << std::endl;
             exit(1);
         }
     }
-    std::shared_ptr<QOpenGLFunctions_4_3_Core> funcs;
+    std::shared_ptr<QOpenGLFunctions_4_3_Core> _funcs;
 };
 
 #endif // GLFUNCS_H

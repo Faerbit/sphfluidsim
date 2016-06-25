@@ -10,7 +10,7 @@
 #include "shaderprogram.h"
 #include "camera.h"
 #include "particles.h"
-#include "glfuncs.h"
+#include "simulation.h"
 
 class GLWidget : public QOpenGLWidget{
     Q_OBJECT
@@ -44,6 +44,7 @@ private:
 
     Camera camera;
 
+    Simulation simulation;
     Particles particles;
 
     int width;
