@@ -1,6 +1,7 @@
 #include "particles.h"
 #include "modelloader.h"
 #include "constants.h"
+#include "glfuncs.h"
 
 using namespace std;
 
@@ -8,25 +9,16 @@ Particles::Particles () {
     ptr = nullptr;
 }
 
-Particles::Particles(string filePath) :
-    positionsBuffer(QOpenGLBuffer::VertexBuffer) {
+Particles::Particles(string filePath,
+        shared_ptr<QOpenGLBuffer> positionsBuffer, int particleCount) {
     ptr = ParticlesManager::load(filePath);
     basePosition = QVector3D();
     scale = 1.0f;
-    positions = std::vector<QVector3D>();
-    positions.push_back(QVector3D());
-    positions.push_back(QVector3D(0.0f, 2.0f, 0.0f));
-    positions.push_back(QVector3D(0.0f, 4.0f, 0.0f));
-    positionsBuffer.create();
-    positionsBuffer.bind();
-    positionsBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-    positionsBuffer.allocate(&positions[0],
-            positions.size() * 3 * sizeof(GLfloat));
-    positionsBuffer.release();
+    this->positionsBuffer = positionsBuffer;
+    this->particleCount = particleCount;
 }
 
-void Particles::render(ShaderProgram* program, QMatrix4x4 vpMatrix,
-        shared_ptr<QOpenGLFunctions_4_3_Core> funcs) {
+void Particles::render(ShaderProgram* program, QMatrix4x4 vpMatrix) {
     QMatrix4x4 modelMatrix;
     modelMatrix.translate(basePosition);
     modelMatrix.scale(scale);
@@ -43,22 +35,22 @@ void Particles::render(ShaderProgram* program, QMatrix4x4 vpMatrix,
     program->setAttribFormat(ShaderProgram::normal, GL_FLOAT, offset, 4,
             stride);
 
-    positionsBuffer.bind();
+    positionsBuffer->bind();
     offset = 0;
     stride = 3 * sizeof(GLfloat);
     program->setAttribFormat(ShaderProgram::position, GL_FLOAT, offset, 3,
             stride);
     program->enablePosition();
-    funcs->glVertexAttribDivisor(program->getPositionLoc(), 1);
+    glFuncs::funcs()->glVertexAttribDivisor(program->getPositionLoc(), 1);
 
     program->enableAttribs();
 
-    funcs->glDrawElementsInstanced(GL_TRIANGLES, ptr->indices.size(),
-            GL_UNSIGNED_INT, 0, positions.size());
+    glFuncs::funcs()->glDrawElementsInstanced(GL_TRIANGLES, ptr->indices.size(),
+            GL_UNSIGNED_INT, 0, particleCount);
 
     program->disableAttribs();
 
-    positionsBuffer.release();
+    positionsBuffer->release();
     ptr->ibo.release();
     ptr->vbo.release();
 }

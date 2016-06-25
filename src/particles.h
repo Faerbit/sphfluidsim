@@ -7,7 +7,7 @@
 #include <QVector3D>
 #include <QMatrix4x4>
 #include <chrono>
-#include <QOpenGLFunctions_4_3_Core>
+#include <memory>
 
 using Clock = std::chrono::steady_clock;
 using TimePoint = std::chrono::time_point<Clock>;
@@ -16,9 +16,9 @@ using Time = std::chrono::duration<float>;
 class Particles {
 public:
     Particles();
-    Particles(std::string filePath);
-    void render(ShaderProgram* program, QMatrix4x4 vpMatrix,
-            std::shared_ptr<QOpenGLFunctions_4_3_Core> funcs);
+    Particles(std::string filePath, 
+            std::shared_ptr<QOpenGLBuffer> positionsBuffer, int particleCount);
+    void render(ShaderProgram* program, QMatrix4x4 vpMatrix);
 
 private:
     struct ParticlesData {
@@ -35,8 +35,8 @@ private:
 
     typedef std::shared_ptr<ParticlesData> sharedParticles;
     sharedParticles ptr;
-    std::vector<QVector3D> positions;
-    QOpenGLBuffer positionsBuffer;
+    int particleCount;
+    std::shared_ptr<QOpenGLBuffer> positionsBuffer;
     QVector3D basePosition;
     float scale;
 
