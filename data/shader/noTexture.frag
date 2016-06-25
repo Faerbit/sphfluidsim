@@ -6,7 +6,7 @@ out vec4 fragColor;
 
 uniform vec3 cameraPos;
 
-vec3 lightVector = normalize(vec3(0.0, 1.0, 0.0));
+vec3 lightVector = normalize(vec3( -0.25, 1.0, 0.0));
 float specularFactor = 0.2;
 float diffuseFactor = 0.8;
 float ambientFactor = 0.2;

@@ -35,6 +35,9 @@ GLWidget::GLWidget(QWidget* parent) :
     timer.setInterval(0);
     timer.start();
     start = Clock::now();
+
+    funcs = shared_ptr<QOpenGLFunctions_4_3_Core>
+        (new QOpenGLFunctions_4_3_Core());
 }
 
 GLWidget::~GLWidget() {
@@ -48,17 +51,21 @@ void GLWidget::initializeGL () {
         logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
         logger->enableMessages();
     }
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glDepthFunc(GL_LEQUAL);
-    glEnable(GL_TEXTURE_2D);
+    if (!funcs->initializeOpenGLFunctions()) {
+        cerr << "Failed to initialize OpenGL context" << endl;
+        exit(1);
+    }
+    funcs->glEnable(GL_DEPTH_TEST);
+    funcs->glEnable(GL_CULL_FACE);
+    funcs->glCullFace(GL_BACK);
+    funcs->glDepthFunc(GL_LEQUAL);
+    //funcs->glEnable(GL_TEXTURE_2D);
 
-    glClearDepth(1.0f);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    funcs->glClearDepth(1.0f);
+    funcs->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     defaultShaderProgram = ShaderProgram("noTexture.vert", "noTexture.frag",
-            "vert", "normal", "texCoord", "texture", "vpMatrix",
-            "modelMatrix", "normalMatrix", "cameraPos");
+            "vert", "normal", "position", "mvpMatrix", "modelMatrix",
+            "normalMatrix", "cameraPos");
 
     camera = Camera(QVector3D(0.0f, 10.0f, -10.0f),
                     QVector3D(0.0f, -1.0f, 1.0f));
@@ -95,7 +102,7 @@ void GLWidget::paintGL() {
 
     defaultShaderProgram.bind();
     defaultShaderProgram.setCameraPos(camera.getPosition());
-    particles.render(&defaultShaderProgram, vpMatrix);
+    particles.render(&defaultShaderProgram, vpMatrix, funcs);
     defaultShaderProgram.release();
 }
 

@@ -14,7 +14,7 @@
 #ifndef MODELLOADER_H
 #define MODELLOADER_H
 
-#include <GL/gl.h>
+#include <qopengl.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>

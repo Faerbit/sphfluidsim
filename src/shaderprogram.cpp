@@ -42,6 +42,7 @@ ShaderProgram::ShaderProgram(std::string vertexShaderFilePath,
     textureUniform = -1;
     utilityTextureUniform = -1;
     timeUniform = -1;
+    positionAttrib = -1;
     mvpUniform = getLocation(uniform, mvpUniformName);
     modelUniform = getLocation(uniform, mMatrixUniformName);
     normalMatrixUniform = getLocation(uniform, normalMatrixUniformName);
@@ -49,15 +50,30 @@ ShaderProgram::ShaderProgram(std::string vertexShaderFilePath,
 }
 
 ShaderProgram::ShaderProgram(std::string vertexShaderFilePath,
-            std::string fragmentShaderFilePath,
-            std::string vertexAttribName,
-            std::string normalAttribName,
-            std::string texCoordAttribName,
-            std::string textureUniformName,
-            std::string mvpUniformName,
-            std::string mMatrixUniformName,
-            std::string normalMatrixUniformName,
-            std::string cameraPosUniformName) :
+        std::string fragmentShaderFilePath,
+        std::string vertexAttribName,
+        std::string normalAttribName,
+        std::string positionAttribName,
+        std::string mvpUniformName,
+        std::string mMatrixUniformName,
+        std::string normalMatrixUniformName,
+        std::string cameraPosUniformName) :
+    ShaderProgram( vertexShaderFilePath, fragmentShaderFilePath,
+            vertexAttribName, normalAttribName, mvpUniformName,
+            mMatrixUniformName, normalMatrixUniformName, cameraPosUniformName) {
+    positionAttrib = getLocation(attrib, positionAttribName);
+}
+
+ShaderProgram::ShaderProgram(std::string vertexShaderFilePath,
+        std::string fragmentShaderFilePath,
+        std::string vertexAttribName,
+        std::string normalAttribName,
+        std::string texCoordAttribName,
+        std::string textureUniformName,
+        std::string mvpUniformName,
+        std::string mMatrixUniformName,
+        std::string normalMatrixUniformName,
+        std::string cameraPosUniformName) :
     ShaderProgram(vertexShaderFilePath, fragmentShaderFilePath,
             vertexAttribName, normalAttribName, mvpUniformName,
             mMatrixUniformName, normalMatrixUniformName, cameraPosUniformName) {
@@ -66,17 +82,17 @@ ShaderProgram::ShaderProgram(std::string vertexShaderFilePath,
 }
 
 ShaderProgram::ShaderProgram(std::string vertexShaderFilePath,
-            std::string fragmentShaderFilePath,
-            std::string vertexAttribName,
-            std::string normalAttribName,
-            std::string texCoordAttribName,
-            std::string textureUniformName,
-            std::string utilityTextureUniformName,
-            std::string timeUniformName,
-            std::string mvpUniformName,
-            std::string mMatrixUniformName,
-            std::string normalMatrixUniformName,
-            std::string cameraPosUniformName) :
+        std::string fragmentShaderFilePath,
+        std::string vertexAttribName,
+        std::string normalAttribName,
+        std::string texCoordAttribName,
+        std::string textureUniformName,
+        std::string utilityTextureUniformName,
+        std::string timeUniformName,
+        std::string mvpUniformName,
+        std::string mMatrixUniformName,
+        std::string normalMatrixUniformName,
+        std::string cameraPosUniformName) :
     ShaderProgram(vertexShaderFilePath, fragmentShaderFilePath,
             vertexAttribName, normalAttribName, texCoordAttribName,
             textureUniformName, mvpUniformName, mMatrixUniformName,
@@ -131,24 +147,27 @@ void ShaderProgram::setMatrices(QMatrix4x4 vpMatrix, QMatrix4x4 mMatrix) {
     shaderProgram->setUniformValue(modelUniform, mMatrix);
 }
 
-void ShaderProgram::setMatrices_no_mult(QMatrix4x4 vpMatrix,
-        QMatrix4x4 mMatrix) {
-    shaderProgram->setUniformValue(mvpUniform, vpMatrix);
-    shaderProgram->setUniformValue(normalMatrixUniform, mMatrix.normalMatrix());
-    shaderProgram->setUniformValue(modelUniform, mMatrix);
-}
-
 void ShaderProgram::enableAttribs() {
     shaderProgram->enableAttributeArray(vertexAttrib);
     shaderProgram->enableAttributeArray(normalAttrib);
+    /*if (positionAttrib > 0) {
+        shaderProgram->enableAttributeArray(positionAttrib);
+    }*/
     if (texCoordAttrib > 0) {
         shaderProgram->enableAttributeArray(texCoordAttrib);
     }
 }
 
+void ShaderProgram::enablePosition() {
+    shaderProgram->enableAttributeArray(positionAttrib);
+}
+
 void ShaderProgram::disableAttribs() {
     shaderProgram->disableAttributeArray(vertexAttrib);
     shaderProgram->disableAttributeArray(normalAttrib);
+    if (positionAttrib > 0) {
+        shaderProgram->disableAttributeArray(positionAttrib);
+    }
     if (texCoordAttrib > 0) {
         shaderProgram->disableAttributeArray(texCoordAttrib);
     }
@@ -162,6 +181,15 @@ void ShaderProgram::setAttribFormat(AttribType attrType, GLenum eleType,
     }
     else if (attrType == normal) {
         shaderProgram->setAttributeBuffer(normalAttrib, eleType, offset,
+                tupleSize, stride);
+    }
+    else if (attrType == position) {
+        if (positionAttrib < 0) {
+            cerr << "Cannot set attribute format for undefined attributes."
+                << endl;
+            exit(1);
+        }
+        shaderProgram->setAttributeBuffer(positionAttrib, eleType, offset,
                 tupleSize, stride);
     }
     else if (attrType == texCoord) {
@@ -189,4 +217,8 @@ void ShaderProgram::setTime(Time time) {
 
 void ShaderProgram::setCameraPos(QVector3D cameraPos) {
     shaderProgram ->setUniformValue(cameraPosUniform, cameraPos);
+}
+
+int ShaderProgram::getPositionLoc() {
+    return positionAttrib;
 }

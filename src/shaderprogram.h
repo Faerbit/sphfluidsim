@@ -14,6 +14,7 @@ public:
     enum AttribType {
         vertex,
         normal,
+        position,
         texCoord
     };
     enum LocType {
@@ -29,6 +30,15 @@ public:
             std::string fragmentShaderFilePath,
             std::string vertexAttribName,
             std::string normalAttribName,
+            std::string mvpUniformName,
+            std::string mMatrixUniformName,
+            std::string normalMatrixUniformName,
+            std::string cameraPosUniformName);
+    ShaderProgram(std::string vertexShaderFilePath,
+            std::string fragmentShaderFilePath,
+            std::string vertexAttribName,
+            std::string normalAttribName,
+            std::string positionAttribName,
             std::string mvpUniformName,
             std::string mMatrixUniformName,
             std::string normalMatrixUniformName,
@@ -59,18 +69,20 @@ public:
     void release();
     void bindTextureUnit(TextureType type, int textureUnit);
     void setMatrices(QMatrix4x4 vpMatrix, QMatrix4x4 mMatrix);
-    void setMatrices_no_mult(QMatrix4x4 vpMatrix, QMatrix4x4 mMatrix);
     void enableAttribs();
+    void enablePosition();
     void disableAttribs();
     void setAttribFormat(AttribType attrType, GLenum eleType, int offset,
             int tupleSize, int stride);
     void setTime(Time time);
     void setCameraPos(QVector3D cameraPos);
+    int getPositionLoc();
 private:
     int getLocation(LocType type, std::string attribName);
     std::unique_ptr<QOpenGLShaderProgram> shaderProgram;
     int vertexAttrib;
     int normalAttrib;
+    int positionAttrib;
     int texCoordAttrib;
     int textureUniform;
     int utilityTextureUniform;
