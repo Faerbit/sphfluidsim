@@ -28,10 +28,13 @@ public:
             float pos_x, float pos_y, float pos_z,
             float size);
     void init();
+    float getMinDensity();
 private:
     float domain_size_x = 0.0f;
     float domain_size_y = 0.0f;
     float domain_size_z = 0.0f;
+
+    float minDensity = std::numeric_limits<float>::max();
 
     int maxParticleCount = 0;
 

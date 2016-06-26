@@ -70,12 +70,15 @@ void GLWidget::load() {
     simulation = Simulation(1000, 10.0f, 10.0f, 10.0f);
     simulation.addFluidCuboid(1.0f,
             0.0f, 0.0f, 0.0f,
-            5.0f, 2.0f, 5.0f
+            2.0f, 9.0f, 2.0f
     );
     simulation.init();
     particles = Particles("sphere_low.obj",
             simulation.getPositionsBuffer(),
-            simulation.getParticleCount());
+            QVector3D(-5.0f , -5.0f, 0.0f),
+            simulation.getParticleCount(),
+            simulation.getMinDensity()
+            );
 }
 
 void GLWidget::resizeGL(int width, int height) {

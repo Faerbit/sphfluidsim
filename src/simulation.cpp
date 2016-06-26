@@ -2,6 +2,7 @@
 #include "glfuncs.h"
 #include "constants.h"
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 
@@ -14,6 +15,8 @@ Simulation::Simulation(int maxParticleCount,
     this->domain_size_x = domain_size_x;
     this->domain_size_y = domain_size_y;
     this->domain_size_z = domain_size_z;
+
+    minDensity = numeric_limits<float>::max();
 
     positionsBuffer = shared_ptr<QOpenGLBuffer>
         (new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer));
@@ -37,15 +40,18 @@ void Simulation::addFluidCuboid(float maxPartShare,
     int count_y = floor(size_y/cbrt(volume/partCount));
     int count_z = floor(size_z/cbrt(volume/partCount));
     float density_x = size_x/count_x;
+    minDensity = min(minDensity, density_x);
     float density_y = size_y/count_y;
+    minDensity = min(minDensity, density_y);
     float density_z = size_z/count_z;
+    minDensity = min(minDensity, density_z);
     cout << "Adding " << count_x * count_y * count_z << " Particles. " << 
         "Leaving " <<
          (1.0f - (((float)count_x * count_y * count_z) /(float)partCount)) * 100.0f
         << " \% unused." 
-        << " x: " << count_x * density_x
-        << " y: " << count_y * density_y
-        << " z: " << count_z * density_z
+        << " x: " << count_x * density_x << " density_x: " << density_x
+        << " y: " << count_y * density_y << " density_y: " << density_y
+        << " z: " << count_z * density_z << " density_z: " << density_z
         << endl;
     for(int i = 0; i<count_x; i++) {
         for(int j = 0; j<count_y; j++) {
@@ -68,6 +74,7 @@ void Simulation::addFluidCube(float maxPartShare,
     float volume = size * size * size;
     int count = floor(cbrt(partCount));
     float density = size/count;
+    minDensity=min(minDensity, density);
     cout << "Adding " << count * count * count << " Particles. " << 
         "Leaving " <<
          (1.0f - (((float)count * count * count) /(float)partCount)) * 100.0f
@@ -125,4 +132,8 @@ void Simulation::simulate(Time time) {
     glFuncs::funcs()->glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     computeShader.release();
     positionsBuffer->release();
+}
+
+float Simulation::getMinDensity() {
+    return minDensity;
 }

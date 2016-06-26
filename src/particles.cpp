@@ -9,13 +9,14 @@ Particles::Particles () {
     ptr = nullptr;
 }
 
-Particles::Particles(string filePath,
-        shared_ptr<QOpenGLBuffer> positionsBuffer, int particleCount) {
-    ptr = ParticlesManager::load(filePath);
-    basePosition = QVector3D();
+Particles::Particles(string particleModelfilePath,
+        shared_ptr<QOpenGLBuffer> positionsBuffer,
+        QVector3D basePosition,
+        int particleCount, float partScale) {
+    ptr = ParticlesManager::load(particleModelfilePath);
+    this->basePosition = basePosition;
     scale = 1.0f;
-    //partScale = 0.0001f;
-    partScale=0.125f;
+    this->partScale= partScale * 0.5;
     this->positionsBuffer = positionsBuffer;
     this->particleCount = particleCount;
 }

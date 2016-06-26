@@ -12,8 +12,10 @@
 class Particles {
 public:
     Particles();
-    Particles(std::string filePath, 
-            std::shared_ptr<QOpenGLBuffer> positionsBuffer, int particleCount);
+    Particles(std::string particleModelfilePath,
+            std::shared_ptr<QOpenGLBuffer> positionsBuffer,
+            QVector3D basePosition,
+            int particleCount, float partScale);
     void render(ShaderProgram* program, QMatrix4x4 vpMatrix);
 
 private:
