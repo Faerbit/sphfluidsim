@@ -1,14 +1,17 @@
 #version 430
 
-layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = $THREAD_SIZE, local_size_y = 1, local_size_z = 1) in;
 
 layout(std430, binding = 0) buffer Positions{
     vec3 elements[3];
 } positions;
 
 uniform float time;
+uniform int work_items;
 
 void main() {
     uint ident = gl_GlobalInvocationID.x;
-    positions.elements[ident] = vec3(0.0, sin(time) + float(ident)*2.0, 0.0);
+    if (ident <= work_items) {
+        positions.elements[ident] = vec3(0.0, sin(time) + float(ident)*2.0, 0.0);
+    }
 }

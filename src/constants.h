@@ -9,4 +9,8 @@ const std::string TEXTURE_PATH = DATA_PATH + "textures/";
 const float MOUSE_SENSITIVITY = 10.0f;
 const float MOVEMENT_SPEED = 0.5f;
 
+// numerical stuff
+
+const int CMP_THREAD_SIZE = 32;
+
 #endif // CONSTANTS_H
