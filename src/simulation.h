@@ -39,7 +39,9 @@ private:
     int maxParticleCount = 0;
 
     std::shared_ptr<QOpenGLBuffer> positionsBuffer = nullptr;
+    QOpenGLBuffer velocitiesBuffer;
     std::vector<QVector4D> startPositions;
+    std::vector<QVector4D> startVelocities;
     ComputeShader computeShader;
 };
 

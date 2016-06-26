@@ -3,6 +3,7 @@
 #include "constants.h"
 #include <cmath>
 #include <algorithm>
+#include <utility>
 
 using namespace std;
 
@@ -28,7 +29,22 @@ Simulation::Simulation(int maxParticleCount,
     positionsBuffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
     positionsBuffer->release();
 
-    computeShader = ComputeShader("pos.cmp", "time", "work_items");
+    startVelocities = vector<QVector4D>(maxParticleCount);
+    // init with no velocity
+    startVelocities.assign(maxParticleCount, QVector4D());
+
+    velocitiesBuffer.create();
+    velocitiesBuffer.bind();
+    velocitiesBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    velocitiesBuffer.allocate(&startVelocities[0],
+            startVelocities.size() * 4 * sizeof(GLfloat));
+    velocitiesBuffer.release();
+
+    pair<string, string> thread_size = 
+        pair<string, string>("$THREAD_SIZE", to_string(CMP_THREAD_SIZE));
+    vector<pair<string, string>> vars = vector<pair<string, string>>();
+    vars.push_back(thread_size);
+    computeShader = ComputeShader("pos.cmp", "time", "work_items", vars);
 }
 
 void Simulation::addFluidCuboid(float maxPartShare,

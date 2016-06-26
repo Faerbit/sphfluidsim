@@ -11,27 +11,33 @@ ComputeShader::ComputeShader() {
     shaderProgram = nullptr;
 }
 
-string ComputeShader::loadShader(string fileName) {
+string ComputeShader::loadShader(string fileName,
+    std::vector<std::pair<std::string, std::string>> sourceVariables) {
     ifstream file(fileName);
     string content ((istreambuf_iterator<char>(file)),
                     istreambuf_iterator<char>());
-    string var = "$THREAD_SIZE";
-    auto start_pos = content.find(var);
-    if (start_pos == string::npos) {
-        cout << "Failed to replace variable '" << var
-            << "' in shader '" << fileName << "'." << endl;
-        return content;
+    for (auto pair : sourceVariables) {
+        string var = get<0>(pair);
+        auto start_pos = content.find(var);
+        if (start_pos == string::npos) {
+            cout << "Failed to replace variable '" << var
+                << "' in shader '" << fileName << "'." << endl;
+            return content;
+        }
+        content.replace(start_pos, var.length(), get<1>(pair));
     }
-    content.replace(start_pos, var.length(), to_string(CMP_THREAD_SIZE));
     return content;
 }
 
 ComputeShader::ComputeShader(std::string computeShaderFilePath,
         std::string timeUniformName,
-        std::string workItemsUniformName) {
-    shaderProgram = unique_ptr<QOpenGLShaderProgram>(new QOpenGLShaderProgram());
+        std::string workItemsUniformName,
+        std::vector<std::pair<std::string, std::string>> sourceVariables) {
+    shaderProgram = unique_ptr<QOpenGLShaderProgram>(
+            new QOpenGLShaderProgram());
     if (!shaderProgram->addShaderFromSourceCode(QOpenGLShader::Compute,
-            loadShader(SHADER_PATH + computeShaderFilePath).c_str())) {
+            loadShader(SHADER_PATH + computeShaderFilePath,
+                sourceVariables).c_str())) {
         cerr << "Shader " << SHADER_PATH + computeShaderFilePath
             << " could not be loaded. Exiting."
             << endl;
