@@ -22,16 +22,11 @@ public:
     void paintGL();
     void keyPressEvent(QKeyEvent* event);
     void mouseMoveEvent(QMouseEvent* event);
+    void wheelEvent(QWheelEvent *event);
 
 private slots:
     void onMessageLogged(QOpenGLDebugMessage msg);
     void _update();
-
-// private methods
-private:
-    void loadSolarSystem(std::string meshFilePath);
-    void reloadPlanets();
-
 
 // private variables
 private:

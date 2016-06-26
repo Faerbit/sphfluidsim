@@ -7,6 +7,7 @@
 #include <QVector3D>
 #include <QMatrix4x4>
 #include <memory>
+#include <QQuaternion>
 
 
 class Particles {
@@ -17,6 +18,7 @@ public:
             QVector3D basePosition,
             int particleCount, float partScale);
     void render(ShaderProgram* program, QMatrix4x4 vpMatrix);
+    void setRotation_y(float angle);
 
 private:
     struct ParticlesData {
@@ -36,6 +38,7 @@ private:
     int particleCount;
     std::shared_ptr<QOpenGLBuffer> positionsBuffer;
     QVector3D basePosition;
+    QQuaternion rotation;
     float scale;
     float partScale;
 

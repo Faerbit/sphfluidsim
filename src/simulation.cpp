@@ -45,7 +45,7 @@ void Simulation::addFluidCuboid(float maxPartShare,
     minDensity = min(minDensity, density_y);
     float density_z = size_z/count_z;
     minDensity = min(minDensity, density_z);
-    cout << "Adding " << count_x * count_y * count_z << " Particles. " << 
+    qDebug() << "Adding " << count_x * count_y * count_z << " Particles. " << 
         "Leaving " <<
          (1.0f - (((float)count_x * count_y * count_z) /(float)partCount)) * 100.0f
         << " \% unused." 
@@ -75,7 +75,7 @@ void Simulation::addFluidCube(float maxPartShare,
     int count = floor(cbrt(partCount));
     float density = size/count;
     minDensity=min(minDensity, density);
-    cout << "Adding " << count * count * count << " Particles. " << 
+    qDebug() << "Adding " << count * count * count << " Particles. " << 
         "Leaving " <<
          (1.0f - (((float)count * count * count) /(float)partCount)) * 100.0f
         << " \% unused." 

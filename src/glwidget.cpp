@@ -25,9 +25,9 @@ GLWidget::GLWidget(QWidget* parent) :
             this, SLOT (onMessageLogged(QOpenGLDebugMessage)),
             Qt::DirectConnection);
 
-    // enable mouse tracking
+    /*// enable mouse tracking
     setProperty("mouseTracking", true);
-    setCursor(Qt::BlankCursor);
+    setCursor(Qt::BlankCursor);*/
 
     connect(&timer, SIGNAL(timeout()), this, SLOT(_update()),
             Qt::DirectConnection);
@@ -116,7 +116,7 @@ void GLWidget::keyPressEvent(QKeyEvent* event) {
         case Qt::Key_Escape:
             qApp->quit();
             break;
-        case Qt::Key_W:
+        /*case Qt::Key_W:
             camera.moveForward(MOVEMENT_SPEED);
             break;
         case Qt::Key_A:
@@ -130,7 +130,7 @@ void GLWidget::keyPressEvent(QKeyEvent* event) {
             break;
         case Qt::Key_Space:
             camera.moveUp(MOVEMENT_SPEED);
-            break;
+            break;*/
         case Qt::Key_Home:
             camera.reset();
             break;
@@ -141,8 +141,8 @@ void GLWidget::keyPressEvent(QKeyEvent* event) {
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent* event) {
-    camera.pan(-(event->x() - width/2.0f)/MOUSE_SENSITIVITY,
-            (event->y() - height/2.0f)/MOUSE_SENSITIVITY);
+    /*camera.pan(-(event->x() - width/2.0f)/MOUSE_SENSITIVITY,
+            (event->y() - height/2.0f)/MOUSE_SENSITIVITY);*/
 }
 
 void GLWidget::onMessageLogged(QOpenGLDebugMessage msg) {
@@ -153,8 +153,22 @@ void GLWidget::onMessageLogged(QOpenGLDebugMessage msg) {
 }
 
 void GLWidget::_update() {
-    QCursor::setPos(mapToGlobal(QPoint(width/2, height/2)));
+    //QCursor::setPos(mapToGlobal(QPoint(width/2, height/2)));
     simulation.simulate(Clock::now() - start);
+    float rotationPeriod = 20.0f;
+    Time time = Clock::now() - start;
+    float fTime = time.count();
+    float angle = 360.0f/rotationPeriod * fTime;
+    particles.setRotation_y(angle);
     paintGL();
     update();
+}
+
+void GLWidget::wheelEvent(QWheelEvent *event) {
+    if (event->angleDelta().y() > 0) {
+        camera.moveForward(2*MOVEMENT_SPEED);
+    }
+    else {
+        camera.moveBack(2*MOVEMENT_SPEED);
+    }
 }

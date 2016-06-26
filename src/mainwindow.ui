@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Solar System Model</string>
+   <string>SPH Fluid Simulation</string>
   </property>
   <widget class="GLWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout">

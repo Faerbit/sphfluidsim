@@ -19,12 +19,14 @@ Particles::Particles(string particleModelfilePath,
     this->partScale= partScale * 0.5;
     this->positionsBuffer = positionsBuffer;
     this->particleCount = particleCount;
+    rotation = QQuaternion();
 }
 
 void Particles::render(ShaderProgram* program, QMatrix4x4 vpMatrix) {
     QMatrix4x4 modelMatrix;
-    modelMatrix.translate(basePosition);
     modelMatrix.scale(scale);
+    modelMatrix.rotate(rotation);
+    modelMatrix.translate(basePosition);
     program->setMatrices(vpMatrix, modelMatrix);
     program->setScale(partScale);
     ptr->vbo.bind();
@@ -104,4 +106,10 @@ void Particles::ParticlesData::initIBO() {
     ibo.setUsagePattern(QOpenGLBuffer::StaticDraw);
     ibo.allocate(&indices[0], indices.size() * sizeof(GLuint));
     ibo.release();
+}
+
+void Particles::setRotation_y(float angle) {
+    rotation = QQuaternion::fromAxisAndAngle(
+            QVector3D(0.0f, 1.0f, 0.0f), angle);
+    rotation.normalize();
 }
