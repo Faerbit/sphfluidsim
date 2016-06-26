@@ -35,6 +35,7 @@ private:
     std::shared_ptr<QOpenGLBuffer> positionsBuffer;
     QVector3D basePosition;
     float scale;
+    float partScale;
 
     class ParticlesManager : public ResourceManager<ParticlesData, ParticlesManager> {
     friend ResourceManager<ParticlesData, ParticlesManager>;

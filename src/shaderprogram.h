@@ -42,8 +42,9 @@ public:
             std::string mvpUniformName,
             std::string mMatrixUniformName,
             std::string normalMatrixUniformName,
+            std::string scaleUniformName,
             std::string cameraPosUniformName);
-    ShaderProgram(std::string vertexShaderFilePath,
+    /*ShaderProgram(std::string vertexShaderFilePath,
             std::string fragmentShaderFilePath,
             std::string vertexAttribName,
             std::string normalAttribName,
@@ -64,7 +65,7 @@ public:
             std::string mvpUniformName,
             std::string mMatrixUniformName,
             std::string normalMatrixUniformName,
-            std::string cameraPosUniformName);
+            std::string cameraPosUniformName);*/
     void bind();
     void release();
     void bindTextureUnit(TextureType type, int textureUnit);
@@ -77,6 +78,7 @@ public:
     void setTime(Time time);
     void setCameraPos(QVector3D cameraPos);
     int getPositionLoc();
+    void setScale(float scale);
 private:
     int getLocation(LocType type, std::string attribName);
     std::unique_ptr<QOpenGLShaderProgram> shaderProgram;
@@ -91,6 +93,7 @@ private:
     int modelUniform;
     int normalMatrixUniform;
     int cameraPosUniform;
+    int scaleUniform = -1;
 };
 
 #endif // SHADER_H

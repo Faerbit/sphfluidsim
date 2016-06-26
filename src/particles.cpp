@@ -14,6 +14,8 @@ Particles::Particles(string filePath,
     ptr = ParticlesManager::load(filePath);
     basePosition = QVector3D();
     scale = 1.0f;
+    //partScale = 0.0001f;
+    partScale=0.125f;
     this->positionsBuffer = positionsBuffer;
     this->particleCount = particleCount;
 }
@@ -23,6 +25,7 @@ void Particles::render(ShaderProgram* program, QMatrix4x4 vpMatrix) {
     modelMatrix.translate(basePosition);
     modelMatrix.scale(scale);
     program->setMatrices(vpMatrix, modelMatrix);
+    program->setScale(partScale);
     ptr->vbo.bind();
     ptr->ibo.bind();
 

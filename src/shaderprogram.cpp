@@ -43,6 +43,7 @@ ShaderProgram::ShaderProgram(std::string vertexShaderFilePath,
     utilityTextureUniform = -1;
     timeUniform = -1;
     positionAttrib = -1;
+    scaleUniform = -1;
     mvpUniform = getLocation(uniform, mvpUniformName);
     modelUniform = getLocation(uniform, mMatrixUniformName);
     normalMatrixUniform = getLocation(uniform, normalMatrixUniformName);
@@ -57,14 +58,16 @@ ShaderProgram::ShaderProgram(std::string vertexShaderFilePath,
         std::string mvpUniformName,
         std::string mMatrixUniformName,
         std::string normalMatrixUniformName,
+        std::string scaleUniformName,
         std::string cameraPosUniformName) :
     ShaderProgram( vertexShaderFilePath, fragmentShaderFilePath,
             vertexAttribName, normalAttribName, mvpUniformName,
             mMatrixUniformName, normalMatrixUniformName, cameraPosUniformName) {
     positionAttrib = getLocation(attrib, positionAttribName);
+    scaleUniform = getLocation(uniform, scaleUniformName);
 }
 
-ShaderProgram::ShaderProgram(std::string vertexShaderFilePath,
+/*ShaderProgram::ShaderProgram(std::string vertexShaderFilePath,
         std::string fragmentShaderFilePath,
         std::string vertexAttribName,
         std::string normalAttribName,
@@ -99,7 +102,7 @@ ShaderProgram::ShaderProgram(std::string vertexShaderFilePath,
             normalMatrixUniformName, cameraPosUniformName) {
     utilityTextureUniform = getLocation(uniform, utilityTextureUniformName);
     timeUniform = getLocation(uniform, timeUniformName);
-}
+}*/
 
 int ShaderProgram::getLocation(LocType type, string attribName) {
     int ret = -1;
@@ -216,9 +219,13 @@ void ShaderProgram::setTime(Time time) {
 }
 
 void ShaderProgram::setCameraPos(QVector3D cameraPos) {
-    shaderProgram ->setUniformValue(cameraPosUniform, cameraPos);
+    shaderProgram->setUniformValue(cameraPosUniform, cameraPos);
 }
 
 int ShaderProgram::getPositionLoc() {
     return positionAttrib;
+}
+
+void ShaderProgram::setScale(float scale) {
+    shaderProgram->setUniformValue(scaleUniform, scale);
 }

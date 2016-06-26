@@ -59,7 +59,7 @@ void GLWidget::initializeGL () {
     glFuncs::funcs()->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     defaultShaderProgram = ShaderProgram("noTexture.vert", "noTexture.frag",
             "vert", "normal", "position", "mvpMatrix", "modelMatrix",
-            "normalMatrix", "cameraPos");
+            "normalMatrix", "scale", "cameraPos");
 
     camera = Camera(QVector3D(0.0f, 10.0f, -10.0f),
                     QVector3D(0.0f, -1.0f, 1.0f));
@@ -67,7 +67,12 @@ void GLWidget::initializeGL () {
 }
 
 void GLWidget::load() {
-    simulation = Simulation(10.0f, 10.0f, 10.0f);
+    simulation = Simulation(1000, 10.0f, 10.0f, 10.0f);
+    simulation.addFluidCuboid(1.0f,
+            0.0f, 0.0f, 0.0f,
+            5.0f, 2.0f, 5.0f
+    );
+    simulation.init();
     particles = Particles("sphere_low.obj",
             simulation.getPositionsBuffer(),
             simulation.getParticleCount());
