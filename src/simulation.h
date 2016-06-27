@@ -37,6 +37,7 @@ private:
     float minDensity = std::numeric_limits<float>::max();
 
     int maxParticleCount = 0;
+    int voxelCount = 0;
 
     std::shared_ptr<QOpenGLBuffer> positionsBuffer = nullptr;
     QOpenGLBuffer velocitiesBuffer;
@@ -49,13 +50,16 @@ private:
     std::vector<std::pair<GLint, GLint>> partIndex;
     ComputeShader voxelizeShader;
     ComputeShader sortPostPassShader;
+    ComputeShader indexVoxelShader;
     void sync();
     std::string str(int i);
     std::string str(float f);
     template<typename T>
-    void debugPrintBuffer(std::string name, std::shared_ptr<QOpenGLBuffer> buffer, int vec_size);
+    void debugPrintBuffer(std::string name, 
+            std::shared_ptr<QOpenGLBuffer> buffer, int vec_size, int ele_count);
     template<typename T>
-    void debugPrintBuffer(std::string name, QOpenGLBuffer buffer, int vec_size);
+    void debugPrintBuffer(std::string name, QOpenGLBuffer buffer, 
+            int vec_size, int ele_count);
 };
 
 #endif // SIMULATION_H

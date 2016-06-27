@@ -1,0 +1,51 @@
+#version 430
+
+layout(local_size_x = $THREAD_SIZE, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding = 0) buffer VoxelIndex {
+    int ind[];
+} voxelIndex;
+
+layout(std430, binding = 1) buffer SortPositions {
+    vec4 spos[];
+} sortPositions;
+
+
+uniform int work_items;
+
+void main() {
+    uint _id = gl_GlobalInvocationID.x;
+    int id = int(_id);
+    if (id <= work_items) {
+        int first = 0;
+        int last = sortPositions.spos.length();
+        int result = -1;
+        int end = int(ceil(log(sortPositions.spos.length())/log(2)));
+        // binary search for particle with current voxel id
+        for(int i = 0; i<end; i++) {
+            int cur = int(floor((last-first)/2)) + first;
+            if (sortPositions.spos[cur].w == id) {
+                result = cur;
+                break;
+            }
+            if (sortPositions.spos[cur].w < id) {
+                first = cur;
+            }
+            else {
+                last = cur;
+            }
+        }
+        // search lowest particle id with current voxel id
+        if (result > 0) {
+            while(true) {
+                if (sortPositions.spos[result-1] == id && result > 0) {
+                    result--;
+                }
+                else {
+                    break;
+                }
+            }
+        }
+        voxelIndex.ind[id] = result;
+    }
+}
