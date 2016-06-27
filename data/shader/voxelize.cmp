@@ -1,0 +1,35 @@
+#version 430
+
+layout(local_size_x = $THREAD_SIZE, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding = 0) buffer Positions {
+    vec4 pos[];
+} positions;
+
+layout(std430, binding = 1) buffer PartIndex {
+    ivec2 partInd[];
+} partIndex;
+
+uniform int work_items;
+
+void main() {
+    uint id = gl_GlobalInvocationID.x;
+    if (id <= work_items) {
+        float domain_size_x = $DOMAIN_SIZE_X;
+        float domain_size_y = $DOMAIN_SIZE_Y;
+        float domain_size_z = $DOMAIN_SIZE_Z;
+        float interaction_radius = $INTERACTION_RADIUS;
+        int voxel_size_x = int(ceil(domain_size_x/interaction_radius));
+        int voxel_size_y = int(ceil(domain_size_y/interaction_radius));
+        int voxel_size_z = int(ceil(domain_size_z/interaction_radius));
+        int index_x = int(floor(positions.pos[id].x/interaction_radius));
+        int index_y = int(floor(positions.pos[id].y/interaction_radius));
+        int index_z = int(floor(positions.pos[id].z/interaction_radius));
+        int voxel_id = index_x 
+            + index_y * voxel_size_x
+            + index_z * (voxel_size_x * voxel_size_y);
+        // write voxel id back to pos.w
+        positions.pos[id].w = voxel_id;
+        partIndex.partInd[id] = ivec2(voxel_id, id);
+    }
+}

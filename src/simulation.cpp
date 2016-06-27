@@ -172,35 +172,65 @@ void Simulation::simulate(Time time) {
     int invoke_count = ceil(float(maxParticleCount)/float(CMP_THREAD_SIZE));
     glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
     sync();
-    // debug out
-    vector<GLfloat> buffer = vector<GLfloat>(4*maxParticleCount);
-    qDebug() << "maxPartCount: " << maxParticleCount;
-    if (positionsBuffer->read(0, &buffer[0],   5*4 /* sizeof(GLfloat)*/)) {
-        cout << "pos buffer: ";
-        for(auto item: buffer) {
-            cout << item << ", ";
-        }
-        cout << endl;
-    }
-    else {
-        qDebug() << "Failed to read buffer.";
-    }
-    vector<GLint> ind_buffer = vector<GLint>(2*maxParticleCount);
-    qDebug() << "maxPartCount: " << maxParticleCount;
-    if (partIndexBuffer.read(0, &ind_buffer[0],   maxParticleCount * 2 * sizeof(GLint))) {
-        cout << "ind buffer: ";
-        for(auto item: ind_buffer) {
-            cout << item << ", ";
-        }
-        cout << endl;
-        exit(0);
-    }
-    else {
-        qDebug() << "Failed to read buffer.";
-    }
     voxelizeShader.release();
     positionsBuffer->release();
     partIndexBuffer.release();
+    // debug out
+    //debugPrintBuffer<GLfloat>("positions", positionsBuffer, 4);
+    //debugPrintBuffer<GLint>("partIndex", partIndexBuffer, 2);
+
+    // TODO sort on GPU
+    vector<pair<GLint, GLint>> ind_buffer = vector<pair<GLint, GLint>>
+        (maxParticleCount);
+    partIndexBuffer.bind();
+    partIndexBuffer.read(0, &ind_buffer[0], 2*maxParticleCount*sizeof(GLint));
+    partIndexBuffer.release();
+    sort(ind_buffer.begin(), ind_buffer.end(), 
+            [](pair<GLint, GLint> a, pair<GLint, GLint> b) {
+            return get<1>(a) < get<1>(b);
+        });
+    partIndexBuffer.bind();
+    partIndexBuffer.write(0, &ind_buffer[0], 2*maxParticleCount*sizeof(GLint));
+    partIndexBuffer.release();
+    //debugPrintBuffer<GLint>("partIndex", partIndexBuffer, 2);
+}
+
+template<typename T>
+void Simulation::debugPrintBuffer(string name, shared_ptr<QOpenGLBuffer> buffer,
+        int vec_size) {
+    vector<T> debug_buffer = vector<T>(vec_size * maxParticleCount);
+    buffer->bind();
+    if (buffer->read(0, &debug_buffer[0],
+                vec_size * maxParticleCount * sizeof(T))) {
+        cout << "Buffer " << name << ": ";
+        for (auto item : debug_buffer) {
+            cout << item << ", ";
+        }
+        cout << endl;
+    }
+    else {
+        cout << "Failed to read buffer" << endl;
+    }
+    buffer->release();
+}
+
+template<typename T>
+void Simulation::debugPrintBuffer(string name, QOpenGLBuffer buffer,
+        int vec_size) {
+    vector<T> debug_buffer = vector<T>(vec_size * maxParticleCount);
+    buffer.bind();
+    if (buffer.read(0, &debug_buffer[0],
+                vec_size * maxParticleCount * sizeof(T))) {
+        cout << "Buffer " << name << ": ";
+        for (auto item : debug_buffer) {
+            cout << item << ", ";
+        }
+        cout << endl;
+    }
+    else {
+        cout << "Failed to read buffer" << endl;
+    }
+    buffer.release();
 }
 
 void Simulation::sync() {

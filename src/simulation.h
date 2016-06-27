@@ -48,6 +48,10 @@ private:
     void sync();
     std::string str(int i);
     std::string str(float f);
+    template<typename T>
+    void debugPrintBuffer(std::string name, std::shared_ptr<QOpenGLBuffer> buffer, int vec_size);
+    template<typename T>
+    void debugPrintBuffer(std::string name, QOpenGLBuffer buffer, int vec_size);
 };
 
 #endif // SIMULATION_H
