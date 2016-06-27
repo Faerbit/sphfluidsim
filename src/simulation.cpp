@@ -185,7 +185,7 @@ void Simulation::init() {
     voxelCount = voxel_size_x * voxel_size_y * voxel_size_z;
 
     voxelIndexBuffer.bind();
-    voxelIndexBuffer.allocate(voxelCount * sizeof(GLint));
+    voxelIndexBuffer.allocate(voxelCount * 2 * sizeof(GLint));
     voxelIndexBuffer.release();
 }
 
@@ -278,7 +278,7 @@ void Simulation::simulate(Time time) {
     indexVoxelShader.release();
     voxelIndexBuffer.release();
     sortedPositionsBuffer.release();
-    debugPrintBuffer<GLint>("voxelIndex", voxelIndexBuffer, 1, voxelCount);
+    debugPrintBuffer<GLint>("voxelIndex", voxelIndexBuffer, 2, voxelCount);
     exit(0);
 }
 

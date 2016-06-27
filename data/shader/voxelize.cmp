@@ -12,16 +12,17 @@ layout(std430, binding = 1) buffer PartIndex {
 
 uniform int work_items;
 
+const float domain_size_x = $DOMAIN_SIZE_X;
+const float domain_size_y = $DOMAIN_SIZE_Y;
+const float domain_size_z = $DOMAIN_SIZE_Z;
+const float interaction_radius = $INTERACTION_RADIUS;
+const int voxel_size_x = int(ceil(domain_size_x/interaction_radius));
+const int voxel_size_y = int(ceil(domain_size_y/interaction_radius));
+const int voxel_size_z = int(ceil(domain_size_z/interaction_radius));
+
 void main() {
     uint id = gl_GlobalInvocationID.x;
     if (id <= work_items) {
-        float domain_size_x = $DOMAIN_SIZE_X;
-        float domain_size_y = $DOMAIN_SIZE_Y;
-        float domain_size_z = $DOMAIN_SIZE_Z;
-        float interaction_radius = $INTERACTION_RADIUS;
-        int voxel_size_x = int(ceil(domain_size_x/interaction_radius));
-        int voxel_size_y = int(ceil(domain_size_y/interaction_radius));
-        int voxel_size_z = int(ceil(domain_size_z/interaction_radius));
         int index_x = int(floor(positions.pos[id].x/interaction_radius));
         int index_y = int(floor(positions.pos[id].y/interaction_radius));
         int index_z = int(floor(positions.pos[id].z/interaction_radius));

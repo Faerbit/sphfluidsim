@@ -3,7 +3,7 @@
 layout(local_size_x = $THREAD_SIZE, local_size_y = 1, local_size_z = 1) in;
 
 layout(std430, binding = 0) buffer VoxelIndex {
-    int ind[];
+    ivec2 ind[];
 } voxelIndex;
 
 layout(std430, binding = 1) buffer SortPositions {
@@ -20,9 +20,9 @@ void main() {
         int first = 0;
         int last = sortPositions.spos.length();
         int result = -1;
-        int end = int(ceil(log(sortPositions.spos.length())/log(2)));
+        int search_end = int(ceil(log(sortPositions.spos.length())/log(2)));
         // binary search for particle with current voxel id
-        for(int i = 0; i<end; i++) {
+        for(int i = 0; i<search_end; i++) {
             int cur = int(floor((last-first)/2)) + first;
             if (sortPositions.spos[cur].w == id) {
                 result = cur;
@@ -35,10 +35,22 @@ void main() {
                 last = cur;
             }
         }
-        // search lowest particle id with current voxel id
-        if (result > 0) {
+        int end = -1;
+        if (result > -1) {
+            // search end of voxel
+            end = result;
             while(true) {
-                if (sortPositions.spos[result-1] == id && result > 0) {
+                if (sortPositions.spos[end+1].w == id) {
+                    end++;
+                }
+                else {
+                    break;
+                }
+            }
+
+            // search lowest particle id with current voxel id
+            while(true) {
+                if (sortPositions.spos[result-1].w == id && result > 0) {
                     result--;
                 }
                 else {
@@ -46,6 +58,6 @@ void main() {
                 }
             }
         }
-        voxelIndex.ind[id] = result;
+        voxelIndex.ind[id] = ivec2(result, end);
     }
 }
