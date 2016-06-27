@@ -67,7 +67,7 @@ void GLWidget::initializeGL () {
 }
 
 void GLWidget::load() {
-    simulation = Simulation(1000, 10.0f, 10.0f, 10.0f);
+    simulation = Simulation(10, 10.0f, 10.0f, 10.0f);
     simulation.addFluidCuboid(1.0f,
             0.0f, 0.0f, 0.0f,
             2.0f, 9.0f, 2.0f

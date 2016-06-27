@@ -4,6 +4,8 @@
 #include <cmath>
 #include <algorithm>
 #include <utility>
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -22,29 +24,45 @@ Simulation::Simulation(int maxParticleCount,
     positionsBuffer = shared_ptr<QOpenGLBuffer>
         (new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer));
 
-    startPositions = vector<QVector4D>(maxParticleCount);
+    startPositions = vector<QVector4D>();
+
+    startVelocities = vector<QVector4D>();
+
+    partIndex = vector<pair<GLint, GLint>>();
 
     positionsBuffer->create();
     positionsBuffer->bind();
     positionsBuffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
     positionsBuffer->release();
 
-    startVelocities = vector<QVector4D>(maxParticleCount);
-    // init with no velocity
-    startVelocities.assign(maxParticleCount, QVector4D());
-
     velocitiesBuffer.create();
     velocitiesBuffer.bind();
     velocitiesBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-    velocitiesBuffer.allocate(&startVelocities[0],
-            startVelocities.size() * 4 * sizeof(GLfloat));
     velocitiesBuffer.release();
 
-    pair<string, string> thread_size = 
-        pair<string, string>("$THREAD_SIZE", to_string(CMP_THREAD_SIZE));
+    partIndexBuffer.create();
+    partIndexBuffer.bind();
+    partIndexBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    partIndexBuffer.release();
+
+    pair<string, string> var_thread_size = 
+        pair<string, string>("$THREAD_SIZE", str(CMP_THREAD_SIZE));
+    pair<string, string> var_domain_size_x = 
+        pair<string, string>("$DOMAIN_SIZE_X", str(domain_size_x));
+    pair<string, string> var_domain_size_y = 
+        pair<string, string>("$DOMAIN_SIZE_Y", str(domain_size_y));
+    pair<string, string> var_domain_size_z = 
+        pair<string, string>("$DOMAIN_SIZE_Z", str(domain_size_z));
+    pair<string, string> var_interaction_radius = 
+        pair<string, string>("$INTERACTION_RADIUS",
+                str(INTERACTION_RADIUS));
     vector<pair<string, string>> vars = vector<pair<string, string>>();
-    vars.push_back(thread_size);
-    computeShader = ComputeShader("pos.cmp", "time", "work_items", vars);
+    vars.push_back(var_thread_size);
+    vars.push_back(var_domain_size_x);
+    vars.push_back(var_domain_size_y);
+    vars.push_back(var_domain_size_z);
+    vars.push_back(var_interaction_radius);
+    voxelizeShader = ComputeShader("voxelize.cmp", "work_items", vars);
 }
 
 void Simulation::addFluidCuboid(float maxPartShare,
@@ -114,10 +132,23 @@ void Simulation::addFluidCube(float maxPartShare,
 }
 
 void Simulation::init() {
+    maxParticleCount = startPositions.size();
     positionsBuffer->bind();
     positionsBuffer->allocate(
-            &startPositions[0], startPositions.size() * 4 * sizeof(GLfloat));
+            &startPositions[0], maxParticleCount * 4 * sizeof(GLfloat));
     positionsBuffer->release();
+
+    // init with no velocity
+    startVelocities.assign(maxParticleCount, QVector4D());
+
+    velocitiesBuffer.bind();
+    velocitiesBuffer.allocate(&startVelocities[0],
+            maxParticleCount * 4 * sizeof(GLfloat));
+    velocitiesBuffer.release();
+
+    partIndexBuffer.bind();
+    partIndexBuffer.allocate(maxParticleCount * 2 * sizeof(GLint));
+    partIndexBuffer.release();
 }
 
 shared_ptr<QOpenGLBuffer> Simulation::getPositionsBuffer() {
@@ -131,25 +162,63 @@ int Simulation::getParticleCount() {
 void Simulation::simulate(Time time) {
     float fTime = time.count();
     positionsBuffer->bind();
-    /*vector<GLfloat> buffer = vector<GLfloat>(12);
-    positionsBuffer->read(0, &buffer[0], 12*sizeof(GLfloat));
-    cout << "buffer: ";
-    for(auto item: buffer) {
-        cout << item << ", ";
-    }
-    cout << endl;*/
+    partIndexBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
             positionsBuffer->bufferId());
-    computeShader.bind();
-    computeShader.setTime(fTime);
-    computeShader.setWorkItems(startPositions.size());
-    int invoke_count = ceil(float(startPositions.size())/float(CMP_THREAD_SIZE));
-    //glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
-    glFuncs::funcs()->glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-    computeShader.release();
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
+            partIndexBuffer.bufferId());
+    voxelizeShader.bind();
+    voxelizeShader.setWorkItems(maxParticleCount);
+    int invoke_count = ceil(float(maxParticleCount)/float(CMP_THREAD_SIZE));
+    glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
+    sync();
+    // debug out
+    vector<GLfloat> buffer = vector<GLfloat>(4*maxParticleCount);
+    qDebug() << "maxPartCount: " << maxParticleCount;
+    if (positionsBuffer->read(0, &buffer[0],   5*4 /* sizeof(GLfloat)*/)) {
+        cout << "pos buffer: ";
+        for(auto item: buffer) {
+            cout << item << ", ";
+        }
+        cout << endl;
+    }
+    else {
+        qDebug() << "Failed to read buffer.";
+    }
+    vector<GLint> ind_buffer = vector<GLint>(2*maxParticleCount);
+    qDebug() << "maxPartCount: " << maxParticleCount;
+    if (partIndexBuffer.read(0, &ind_buffer[0],   maxParticleCount * 2 * sizeof(GLint))) {
+        cout << "ind buffer: ";
+        for(auto item: ind_buffer) {
+            cout << item << ", ";
+        }
+        cout << endl;
+        exit(0);
+    }
+    else {
+        qDebug() << "Failed to read buffer.";
+    }
+    voxelizeShader.release();
     positionsBuffer->release();
+    partIndexBuffer.release();
+}
+
+void Simulation::sync() {
+    glFuncs::funcs()->glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 float Simulation::getMinDensity() {
     return minDensity;
+}
+
+string Simulation::str(int i) {
+    ostringstream buff;
+    buff << setprecision(16) << i;
+    return buff.str();
+}
+
+string Simulation::str(float f) {
+    ostringstream buff;
+    buff << setprecision(16) << f;
+    return buff.str();
 }

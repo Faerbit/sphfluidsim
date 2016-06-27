@@ -30,7 +30,6 @@ string ComputeShader::loadShader(string fileName,
 }
 
 ComputeShader::ComputeShader(std::string computeShaderFilePath,
-        std::string timeUniformName,
         std::string workItemsUniformName,
         std::vector<std::pair<std::string, std::string>> sourceVariables) {
     shaderProgram = unique_ptr<QOpenGLShaderProgram>(
@@ -48,8 +47,16 @@ ComputeShader::ComputeShader(std::string computeShaderFilePath,
             << ". Log: " << endl;
         cerr << shaderProgram->log().toUtf8().constData();
     }
-    timeUniform = getLocation(timeUniformName);
     workItemsUniform = getLocation(workItemsUniformName);
+}
+
+ComputeShader::ComputeShader(std::string computeShaderFilePath,
+        std::string workItemsUniformName,
+        std::string timeUniformName,
+        std::vector<std::pair<std::string, std::string>> sourceVariables):
+            ComputeShader(computeShaderFilePath, workItemsUniformName,
+                sourceVariables) {
+    timeUniform = getLocation(timeUniformName);
 }
 
 int ComputeShader::getLocation(std::string uniformName) {

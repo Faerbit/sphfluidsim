@@ -9,8 +9,11 @@ class ComputeShader {
 public:
     ComputeShader();
     ComputeShader(std::string computeShaderFilePath,
-            std::string timeUniformName,
             std::string workItemsUniformName,
+            std::vector<std::pair<std::string, std::string>> sourceVariables);
+    ComputeShader(std::string computeShaderFilePath,
+            std::string workItemsUniformName,
+            std::string timeUniformName,
             std::vector<std::pair<std::string, std::string>> sourceVariables);
     void bind();
     void release();

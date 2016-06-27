@@ -13,7 +13,7 @@ const float MOVEMENT_SPEED = 0.5f;
 
 const int CMP_THREAD_SIZE = 32;
 
-const float INTERACTION_RADIUS = 0.5f;
+const float INTERACTION_RADIUS = 0.1f;
 const float PARTICLE_MASS = 1.0f;
 
 #endif // CONSTANTS_H
