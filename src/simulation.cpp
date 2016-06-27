@@ -45,6 +45,21 @@ Simulation::Simulation(int maxParticleCount,
     partIndexBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
     partIndexBuffer.release();
 
+    sortedPositionsBuffer.create();
+    sortedPositionsBuffer.bind();
+    sortedPositionsBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    sortedPositionsBuffer.release();
+
+    sortedVelocitiesBuffer.create();
+    sortedVelocitiesBuffer.bind();
+    sortedVelocitiesBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    sortedVelocitiesBuffer.release();
+
+    voxelIndexBuffer.create();
+    voxelIndexBuffer.bind();
+    voxelIndexBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    voxelIndexBuffer.release();
+
     pair<string, string> var_thread_size = 
         pair<string, string>("$THREAD_SIZE", str(CMP_THREAD_SIZE));
     pair<string, string> var_domain_size_x = 
@@ -63,6 +78,9 @@ Simulation::Simulation(int maxParticleCount,
     vars.push_back(var_domain_size_z);
     vars.push_back(var_interaction_radius);
     voxelizeShader = ComputeShader("voxelize.cmp", "work_items", vars);
+    vars.clear();
+    vars.push_back(var_thread_size);
+    sortPostPassShader = ComputeShader("sortPostPass.cmp", "work_items", vars);
 }
 
 void Simulation::addFluidCuboid(float maxPartShare,
@@ -149,6 +167,22 @@ void Simulation::init() {
     partIndexBuffer.bind();
     partIndexBuffer.allocate(maxParticleCount * 2 * sizeof(GLint));
     partIndexBuffer.release();
+
+    sortedPositionsBuffer.bind();
+    sortedPositionsBuffer.allocate(maxParticleCount * 4 * sizeof(GLfloat));
+    sortedPositionsBuffer.release();
+sortedVelocitiesBuffer.bind();
+    sortedVelocitiesBuffer.allocate(maxParticleCount * 4 * sizeof(GLfloat));
+    sortedVelocitiesBuffer.release();
+
+    int voxel_size_x = ceil(domain_size_x/INTERACTION_RADIUS);
+    int voxel_size_y = ceil(domain_size_y/INTERACTION_RADIUS);
+    int voxel_size_z = ceil(domain_size_z/INTERACTION_RADIUS);
+    int voxel_count = voxel_size_x * voxel_size_y * voxel_size_z;
+
+    voxelIndexBuffer.bind();
+    voxelIndexBuffer.allocate(voxel_count * sizeof(GLint));
+    voxelIndexBuffer.release();
 }
 
 shared_ptr<QOpenGLBuffer> Simulation::getPositionsBuffer() {
@@ -156,11 +190,14 @@ shared_ptr<QOpenGLBuffer> Simulation::getPositionsBuffer() {
 }
 
 int Simulation::getParticleCount() {
-    return startPositions.size();
+    return maxParticleCount;
 }
 
 void Simulation::simulate(Time time) {
     float fTime = time.count();
+    int invoke_count = ceil(float(maxParticleCount)/float(CMP_THREAD_SIZE));
+
+    // voxelize particles
     positionsBuffer->bind();
     partIndexBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
@@ -169,7 +206,6 @@ void Simulation::simulate(Time time) {
             partIndexBuffer.bufferId());
     voxelizeShader.bind();
     voxelizeShader.setWorkItems(maxParticleCount);
-    int invoke_count = ceil(float(maxParticleCount)/float(CMP_THREAD_SIZE));
     glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
     sync();
     voxelizeShader.release();
@@ -193,6 +229,36 @@ void Simulation::simulate(Time time) {
     partIndexBuffer.write(0, &ind_buffer[0], 2*maxParticleCount*sizeof(GLint));
     partIndexBuffer.release();
     //debugPrintBuffer<GLint>("partIndex", partIndexBuffer, 2);
+    
+    // sortPostPass
+    partIndexBuffer.bind();
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
+            partIndexBuffer.bufferId());
+    positionsBuffer->bind();
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
+            positionsBuffer->bufferId());
+    velocitiesBuffer.bind();
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
+            velocitiesBuffer.bufferId());
+    sortedPositionsBuffer.bind();
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
+            sortedPositionsBuffer.bufferId());
+    sortedVelocitiesBuffer.bind();
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4,
+            sortedVelocitiesBuffer.bufferId());
+    sortPostPassShader.bind();
+    sortPostPassShader.setWorkItems(maxParticleCount);
+    glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
+    sync();
+    sortPostPassShader.release();
+    partIndexBuffer.release();
+    positionsBuffer->release();
+    velocitiesBuffer.release();
+    sortedPositionsBuffer.release();
+    sortedVelocitiesBuffer.release();
+    debugPrintBuffer<GLfloat>("sortedPos", sortedPositionsBuffer, 4);
+    debugPrintBuffer<GLfloat>("sortedVel", sortedVelocitiesBuffer, 4);
+    exit(0);
 }
 
 template<typename T>

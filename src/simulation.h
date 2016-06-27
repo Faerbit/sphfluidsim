@@ -41,10 +41,14 @@ private:
     std::shared_ptr<QOpenGLBuffer> positionsBuffer = nullptr;
     QOpenGLBuffer velocitiesBuffer;
     QOpenGLBuffer partIndexBuffer;
+    QOpenGLBuffer sortedPositionsBuffer;
+    QOpenGLBuffer sortedVelocitiesBuffer;
+    QOpenGLBuffer voxelIndexBuffer;
     std::vector<QVector4D> startPositions;
     std::vector<QVector4D> startVelocities;
     std::vector<std::pair<GLint, GLint>> partIndex;
     ComputeShader voxelizeShader;
+    ComputeShader sortPostPassShader;
     void sync();
     std::string str(int i);
     std::string str(float f);

@@ -46,6 +46,7 @@ ComputeShader::ComputeShader(std::string computeShaderFilePath,
         cerr << "Could not link shader " << SHADER_PATH + computeShaderFilePath
             << ". Log: " << endl;
         cerr << shaderProgram->log().toUtf8().constData();
+        exit(1);
     }
     workItemsUniform = getLocation(workItemsUniformName);
 }
