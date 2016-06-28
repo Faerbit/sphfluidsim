@@ -48,7 +48,7 @@ const float gravity = $GRAVITY;
 int[$MAX_NO_INTERACT_PARTICLES] neighbourParts;
 int found_neighbour_parts = 0;
 
-void getNeighbourParts(vec4 self) {
+void getNeighbourParts(vec4 self, int own_id) {
     // get voxel pos
     int voxel_id = int(self.w);
     int voxel_z_pos = int(voxel_id/(voxel_count_y * voxel_count_x));
@@ -132,14 +132,13 @@ void getNeighbourParts(vec4 self) {
                 part = partIndices[i].x + partIndices[i].z;
                 if (distance(vec3(self),
                         vec3(sortPositions.spos[part])) <= interaction_radius) {
-                    if (int(gl_GlobalInvocationID.x) != part) {
+                    if (own_id != part) {
                         neighbourParts[found_neighbour_parts] = part;
                         found_neighbour_parts++;
-                        neighbourParts[31] = partIndices[i].y;
                     }
                 }
                 // alternate search direction per particel
-                int direction = 1 -(2*(int(gl_GlobalInvocationID.x)%2));
+                int direction = 1 -(2*(own_id%2));
                 partIndices[i].z =
                     (partIndices[i].z + direction) % (partIndices[i].y + 1);
                 if (partIndices[i].z == partIndices[i].w) {
@@ -157,7 +156,8 @@ void getNeighbourParts(vec4 self) {
 void main() {
     uint id = gl_GlobalInvocationID.x;
     if (id <= work_items) {
-        getNeighbourParts(sortPositions.spos[id]);
+        getNeighbourParts(sortPositions.spos[id], int(id));
+        // physics
         for(int i=0; i<32; i++) {
             sortVelocities.svel[id*36 + i] = float(neighbourParts[i]);
         }
