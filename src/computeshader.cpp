@@ -4,6 +4,8 @@
 #include <fstream>
 #include <streambuf>
 #include <string>
+#include <ctime>
+#include <cstdlib>
 
 using namespace std;
 
@@ -51,15 +53,6 @@ ComputeShader::ComputeShader(std::string computeShaderFilePath,
     workItemsUniform = getLocation(workItemsUniformName);
 }
 
-ComputeShader::ComputeShader(std::string computeShaderFilePath,
-        std::string workItemsUniformName,
-        std::string timeUniformName,
-        std::vector<std::pair<std::string, std::string>> sourceVariables):
-            ComputeShader(computeShaderFilePath, workItemsUniformName,
-                sourceVariables) {
-    timeUniform = getLocation(timeUniformName);
-}
-
 int ComputeShader::getLocation(std::string uniformName) {
     int ret = shaderProgram->uniformLocation(uniformName.c_str());
     if (ret < 0) {
@@ -75,10 +68,6 @@ void ComputeShader::bind() {
 
 void ComputeShader::release() {
     shaderProgram->release();
-}
-
-void ComputeShader::setTime(float time) {
-    shaderProgram->setUniformValue(timeUniform, time);
 }
 
 void ComputeShader::setWorkItems(int items) {

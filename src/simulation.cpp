@@ -6,6 +6,9 @@
 #include <utility>
 #include <sstream>
 #include <iomanip>
+#include <QApplication>
+#include <ctime>
+#include <cstdlib>
 
 using namespace std;
 
@@ -60,6 +63,12 @@ Simulation::Simulation(int maxParticleCount,
     voxelIndexBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
     voxelIndexBuffer.release();
 
+    dataBuffer.create();
+    dataBuffer.bind();
+    dataBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    dataBuffer.allocate(2* sizeof(GLfloat));
+    dataBuffer.release();
+
     pair<string, string> var_thread_size = 
         pair<string, string>("$THREAD_SIZE", str(CMP_THREAD_SIZE));
     pair<string, string> var_domain_size_x = 
@@ -84,6 +93,28 @@ Simulation::Simulation(int maxParticleCount,
     sortPostPassShader = ComputeShader("sortPostPass.cmp", "work_items", vars);
 
     indexVoxelShader = ComputeShader("indexVoxel.cmp", "work_items", vars);    
+
+    pair<string, string> var_max_no_interact_parts = 
+        pair<string, string>("$MAX_NO_INTERACT_PARTICLES",
+                str(MAX_NO_INTERACT_PARTICLES));
+    pair<string, string> var_particle_mass = 
+        pair<string, string>("$PARTICLE_MASS", str(PARTICLE_MASS));
+    pair<string, string> var_gravity = 
+        pair<string, string>("$GRAVITY", str(GRAVITY));
+    // TODO make this configurable
+    pair<string, string> var_kinematic_viscosity = 
+        pair<string, string>("$KINEMATIC_VISCOSITY", str(KINEMATIC_VISCOSITY));
+    vars.push_back(var_domain_size_x);
+    vars.push_back(var_domain_size_y);
+    vars.push_back(var_domain_size_z);
+    vars.push_back(var_interaction_radius);
+    vars.push_back(var_max_no_interact_parts);
+    vars.push_back(var_particle_mass);
+    vars.push_back(var_gravity);
+    vars.push_back(var_kinematic_viscosity);
+    physicsShader = ComputeShader("physics.cmp", "work_items", vars);
+
+    srand(time(0));
 }
 
 void Simulation::addFluidCuboid(float maxPartShare,
@@ -175,8 +206,12 @@ void Simulation::init() {
     sortedPositionsBuffer.allocate(maxParticleCount * 4 * sizeof(GLfloat));
     sortedPositionsBuffer.release();
 
+    // TODO remove temporary stuff
     sortedVelocitiesBuffer.bind();
-    sortedVelocitiesBuffer.allocate(maxParticleCount * 4 * sizeof(GLfloat));
+    //sortedVelocitiesBuffer.allocate(maxParticleCount * 4 * sizeof(GLfloat));
+    vector<QVector4D> tmp = vector<QVector4D>();
+    tmp.assign(maxParticleCount * 32, QVector4D());
+    sortedVelocitiesBuffer.allocate(&tmp[0], maxParticleCount * 4 * 32 * sizeof(GLfloat));
     sortedVelocitiesBuffer.release();
 
     int voxel_size_x = ceil(domain_size_x/INTERACTION_RADIUS);
@@ -189,17 +224,7 @@ void Simulation::init() {
     voxelIndexBuffer.release();
 }
 
-shared_ptr<QOpenGLBuffer> Simulation::getPositionsBuffer() {
-    return positionsBuffer;
-}
-
-int Simulation::getParticleCount() {
-    return maxParticleCount;
-}
-
-void Simulation::simulate(Time time) {
-    float fTime = time.count();
-
+void Simulation::simulate(Time timeStep) {
     // voxelize particles
     positionsBuffer->bind();
     partIndexBuffer.bind();
@@ -215,7 +240,6 @@ void Simulation::simulate(Time time) {
     voxelizeShader.release();
     positionsBuffer->release();
     partIndexBuffer.release();
-    // debug out
     //debugPrintBuffer<GLfloat>("positions", positionsBuffer, 4);
     //debugPrintBuffer<GLint>("partIndex", partIndexBuffer, 2);
 
@@ -279,7 +303,51 @@ void Simulation::simulate(Time time) {
     voxelIndexBuffer.release();
     sortedPositionsBuffer.release();
     debugPrintBuffer<GLint>("voxelIndex", voxelIndexBuffer, 2, voxelCount);
-    exit(0);
+    // physics
+    debugPrintBuffer<GLfloat>("neighbour Voxels", sortedVelocitiesBuffer,
+            4 * 32, maxParticleCount);
+    sortedPositionsBuffer.bind();
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
+            sortedPositionsBuffer.bufferId());
+    voxelIndexBuffer.bind();
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
+            voxelIndexBuffer.bufferId());
+    sortedVelocitiesBuffer.bind();
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
+            sortedVelocitiesBuffer.bufferId());
+    positionsBuffer->bind();
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
+            positionsBuffer->bufferId());
+    velocitiesBuffer.bind();
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4,
+            velocitiesBuffer.bufferId());
+    dataBuffer.bind();
+    updateData(timeStep);
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5,
+            dataBuffer.bufferId());
+    invoke_count = ceil(float(maxParticleCount)/float(CMP_THREAD_SIZE));
+    physicsShader.bind();
+    physicsShader.setWorkItems(maxParticleCount);
+    glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
+    sync();
+    physicsShader.release();
+    sortedPositionsBuffer.release();
+    voxelIndexBuffer.release();
+    sortedVelocitiesBuffer.release();
+    positionsBuffer->release();
+    velocitiesBuffer.release();
+    dataBuffer.release();
+    debugPrintBuffer<GLfloat>("neighbour Voxels", sortedVelocitiesBuffer,
+            4 * 32, maxParticleCount);
+    QApplication::quit();
+}
+
+// assumes dataBuffer is already bound
+void Simulation::updateData(Time timeStep) {
+    vector<GLfloat> data = vector<GLfloat>(2);
+    data[0] = timeStep.count();
+    data[1] = rand();
+    dataBuffer.write(0, &data[0], 2 * sizeof(GLfloat));
 }
 
 template<typename T>
@@ -310,7 +378,7 @@ void Simulation::debugPrintBuffer(string name, QOpenGLBuffer buffer,
                 vec_size * ele_count * sizeof(T))) {
         cout << "Buffer " << name << ": ";
         for (auto item : debug_buffer) {
-            //if(item != -1) {
+            //if(item != 1.55012e-41) {
             cout << item << ", ";
             //}
         }
@@ -340,4 +408,12 @@ string Simulation::str(float f) {
     ostringstream buff;
     buff << setprecision(16) << f;
     return buff.str();
+}
+
+shared_ptr<QOpenGLBuffer> Simulation::getPositionsBuffer() {
+    return positionsBuffer;
+}
+
+int Simulation::getParticleCount() {
+    return maxParticleCount;
 }

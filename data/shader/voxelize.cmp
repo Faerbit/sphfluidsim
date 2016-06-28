@@ -16,9 +16,9 @@ const float domain_size_x = $DOMAIN_SIZE_X;
 const float domain_size_y = $DOMAIN_SIZE_Y;
 const float domain_size_z = $DOMAIN_SIZE_Z;
 const float interaction_radius = $INTERACTION_RADIUS;
-const int voxel_size_x = int(ceil(domain_size_x/interaction_radius));
-const int voxel_size_y = int(ceil(domain_size_y/interaction_radius));
-const int voxel_size_z = int(ceil(domain_size_z/interaction_radius));
+const int voxel_count_x = int(ceil(domain_size_x/interaction_radius));
+const int voxel_count_y = int(ceil(domain_size_y/interaction_radius));
+const int voxel_count_z = int(ceil(domain_size_z/interaction_radius));
 
 void main() {
     uint id = gl_GlobalInvocationID.x;
@@ -27,8 +27,8 @@ void main() {
         int index_y = int(floor(positions.pos[id].y/interaction_radius));
         int index_z = int(floor(positions.pos[id].z/interaction_radius));
         int voxel_id = index_x 
-            + index_y * voxel_size_x
-            + index_z * (voxel_size_x * voxel_size_y);
+            + index_y * voxel_count_x
+            + index_z * (voxel_count_x * voxel_count_y);
         // write voxel id back to pos.w
         positions.pos[id].w = voxel_id;
         partIndex.partInd[id] = ivec2(voxel_id, id);

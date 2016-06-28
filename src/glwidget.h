@@ -42,6 +42,8 @@ private:
     Simulation simulation;
     Particles particles;
 
+    TimePoint lastSimulationTimePoint;
+
     int width;
     int height;
 
