@@ -151,6 +151,7 @@ void Simulation::addFluidCuboid(float maxPartShare,
             }
         }
     }
+    qDebug() << "Added particles: " << startPositions;
 }
 
 void Simulation::addFluidCube(float maxPartShare,
@@ -209,9 +210,9 @@ void Simulation::init() {
     // TODO remove temporary stuff
     sortedVelocitiesBuffer.bind();
     //sortedVelocitiesBuffer.allocate(maxParticleCount * 4 * sizeof(GLfloat));
-    vector<QVector4D> tmp = vector<QVector4D>();
-    tmp.assign(maxParticleCount * 32, QVector4D());
-    sortedVelocitiesBuffer.allocate(&tmp[0], maxParticleCount * 4 * 32 * sizeof(GLfloat));
+    vector<GLfloat> tmp = vector<GLfloat>();
+    tmp.assign(maxParticleCount * 36, 0.0f);
+    sortedVelocitiesBuffer.allocate(&tmp[0], maxParticleCount * 36 * sizeof(GLfloat));
     sortedVelocitiesBuffer.release();
 
     int voxel_size_x = ceil(domain_size_x/INTERACTION_RADIUS);
@@ -305,7 +306,7 @@ void Simulation::simulate(Time timeStep) {
     debugPrintBuffer<GLint>("voxelIndex", voxelIndexBuffer, 2, voxelCount);
     // physics
     debugPrintBuffer<GLfloat>("neighbour Voxels", sortedVelocitiesBuffer,
-            4 * 32, maxParticleCount);
+            36, maxParticleCount);
     sortedPositionsBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
             sortedPositionsBuffer.bufferId());
@@ -338,7 +339,7 @@ void Simulation::simulate(Time timeStep) {
     velocitiesBuffer.release();
     dataBuffer.release();
     debugPrintBuffer<GLfloat>("neighbour Voxels", sortedVelocitiesBuffer,
-            4 * 32, maxParticleCount);
+            36, maxParticleCount);
     QApplication::quit();
 }
 
@@ -346,7 +347,8 @@ void Simulation::simulate(Time timeStep) {
 void Simulation::updateData(Time timeStep) {
     vector<GLfloat> data = vector<GLfloat>(2);
     data[0] = timeStep.count();
-    data[1] = rand();
+    // random float from 0.0 to 1.0
+    data[1] = static_cast<GLfloat>(rand()) / static_cast<GLfloat>(RAND_MAX);
     dataBuffer.write(0, &data[0], 2 * sizeof(GLfloat));
 }
 

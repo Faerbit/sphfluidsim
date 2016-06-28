@@ -12,7 +12,7 @@ layout(std430, binding = 1) buffer VoxelIndex {
 } voxelIndex;
 
 layout(std430, binding = 2) buffer SortVelocities {
-    vec4 svel[];
+    float svel[];
 } sortVelocities;
 
 layout(std430, binding = 3) buffer Positions {
@@ -41,18 +41,16 @@ const int voxel_count_x = int(ceil(domain_size_x/interaction_radius));
 const int voxel_count_y = int(ceil(domain_size_y/interaction_radius));
 const int voxel_count_z = int(ceil(domain_size_z/interaction_radius));
 
-// TODO check if this is needed anywhere
-//const int maxNoInteractParticles = $MAX_NO_INTERACT_PARTICLE;
-
 const float particle_mass = $PARTICLE_MASS;
 const float kinematic_viscosity = $KINEMATIC_VISCOSITY;
 const float gravity = $GRAVITY;
 
 int[$MAX_NO_INTERACT_PARTICLES] neighbourParts;
+int found_neighbour_parts = 0;
 
-void getNeighbourParts(int id) {
+void getNeighbourParts(vec4 self) {
     // get voxel pos
-    int voxel_id = int(sortPositions.spos[id].w);
+    int voxel_id = int(self.w);
     int voxel_z_pos = int(voxel_id/(voxel_count_y * voxel_count_x));
     voxel_id = voxel_id % (voxel_count_y * voxel_count_x);
     int voxel_y_pos = int(voxel_id/voxel_count_x);
@@ -68,9 +66,9 @@ void getNeighbourParts(int id) {
 
     int voxel_min_z_pos = max(0, voxel_z_pos - 1);
     int voxel_max_z_pos = min(voxel_count_z, voxel_z_pos + 1);
-    int neighbour_voxel_count = (voxel_max_x_pos - voxel_min_x_pos) *
-        (voxel_max_y_pos - voxel_max_y_pos) *
-        (voxel_max_z_pos - voxel_min_z_pos);
+    int neighbour_voxel_count = (1+ voxel_max_x_pos - voxel_min_x_pos) *
+        (1 + voxel_max_y_pos - voxel_min_y_pos) *
+        (1 + voxel_max_z_pos - voxel_min_z_pos);
     int[27] neighbour_voxels;
     int ind = 0;
     for(int i = voxel_min_x_pos; i<=voxel_max_x_pos; i++) {
@@ -83,19 +81,88 @@ void getNeighbourParts(int id) {
             }
         }
     }
-    // TODO temporary debug output
-    for(int i=0; i<27; i++) {
-        neighbourParts[i] = neighbour_voxels[i];
+    for(int i = neighbour_voxel_count; i<27; i++) {
+        neighbour_voxels[i] = -1;
+    }
+    ivec4[27] partIndices;
+    for(int i = 0; i<27; i++) {
+        if (neighbour_voxels[i] > -1) {
+            int _min = voxelIndex.ind[neighbour_voxels[i]].x;
+            if (_min > -1) {
+                int _max = voxelIndex.ind[neighbour_voxels[i]].y;
+                // voxel start 
+                partIndices[i].x = _min;
+                // voxel length
+                partIndices[i].y = _max - _min;
+                // random offset into voxel
+                // data.data[1]: random number from 0.0 to 1.0
+                int rand_start = int(data.data[1] * (_max - _min));
+                partIndices[i].z = rand_start;
+                // to be able to detect, when we have searched every particle in
+                // this voxel
+                partIndices[i].w = rand_start;
+            }
+            else {
+                partIndices[i] = ivec4(-1);
+            }
+        }
+        else {
+            partIndices[i] = ivec4(-1);
+        }
+    }
+    found_neighbour_parts = 0;
+    bool[27] voxels_to_search;
+    for(int i = 0; i<27; i++) {
+        voxels_to_search[i] = true;
+    }
+    while (found_neighbour_parts<32) {
+        bool unsearched_voxels = false;
+        for(int i= 0; i<27; i++) {
+            if (voxels_to_search[i] == true) {
+                unsearched_voxels = true;
+                break;
+            }
+        }
+        if (unsearched_voxels == false) {
+            break;
+        }
+        for(int i = 0; i< 27; i++) {
+            int part = partIndices[i].z;
+            if (found_neighbour_parts < 32 && part > -1) {
+                part = partIndices[i].x + partIndices[i].z;
+                if (distance(vec3(self),
+                        vec3(sortPositions.spos[part])) <= interaction_radius) {
+                    if (int(gl_GlobalInvocationID.x) != part) {
+                        neighbourParts[found_neighbour_parts] = part;
+                        found_neighbour_parts++;
+                        neighbourParts[31] = partIndices[i].y;
+                    }
+                }
+                // alternate search direction per particel
+                int direction = 1 -(2*(int(gl_GlobalInvocationID.x)%2));
+                partIndices[i].z =
+                    (partIndices[i].z + direction) % (partIndices[i].y + 1);
+                if (partIndices[i].z == partIndices[i].w) {
+                    partIndices[i].z = -1;
+                }
+            }
+            else {
+                // mark voxel as searched
+                voxels_to_search[i] = false;
+            }
+        }
     }
 }
 
 void main() {
     uint id = gl_GlobalInvocationID.x;
     if (id <= work_items) {
-        getNeighbourParts(int(id));
-        // TODO temporary debug output
+        getNeighbourParts(sortPositions.spos[id]);
         for(int i=0; i<32; i++) {
-            sortVelocities.svel[id*32 + i].x = float(neighbourParts[i]);
+            sortVelocities.svel[id*36 + i] = float(neighbourParts[i]);
         }
+        sortVelocities.svel[id*36 + 32] = float(-13.37);
+        sortVelocities.svel[id*36 + 33] = float(found_neighbour_parts);
+        sortVelocities.svel[id*36 + 34] = float(-13.37);
     }
 }

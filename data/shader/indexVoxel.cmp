@@ -40,7 +40,8 @@ void main() {
             // search end of voxel
             end = result;
             while(true) {
-                if (sortPositions.spos[end+1].w == id) {
+                if (sortPositions.spos[end+1].w == id 
+                        && end < sortPositions.spos.length() -1) {
                     end++;
                 }
                 else {

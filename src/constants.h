@@ -14,6 +14,7 @@ const float MOVEMENT_SPEED = 0.5f;
 const int CMP_THREAD_SIZE = 32;
 
 const float INTERACTION_RADIUS = 1.0f;
+//const float INTERACTION_RADIUS = 0.5f;
 const int MAX_NO_INTERACT_PARTICLES = 32;
 
 const float PARTICLE_MASS = 1.0f;
