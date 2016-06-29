@@ -29,8 +29,6 @@ void main() {
         int voxel_id = index_x 
             + index_y * voxel_count_x
             + index_z * (voxel_count_x * voxel_count_y);
-        // write voxel id back to pos.w
-        positions.pos[id].w = voxel_id;
         partIndex.partInd[id] = ivec2(voxel_id, id);
     }
 }

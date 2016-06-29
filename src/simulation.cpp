@@ -310,9 +310,9 @@ void Simulation::simulate(Time timeStep) {
     voxelIndexBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
             voxelIndexBuffer.bufferId());
-    sortedPositionsBuffer.bind();
+    partIndexBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
-            sortedPositionsBuffer.bufferId());
+            partIndexBuffer.bufferId());
     indexVoxelShader.bind();
     indexVoxelShader.setWorkItems(voxelCount);
     invoke_count = ceil(float(voxelCount)/float(CMP_THREAD_SIZE));
@@ -320,21 +320,24 @@ void Simulation::simulate(Time timeStep) {
     sync();
     indexVoxelShader.release();
     voxelIndexBuffer.release();
-    sortedPositionsBuffer.release();
+    partIndexBuffer.release();
     debugPrintBuffer<GLint>("voxelIndex", voxelIndexBuffer, 2, voxelCount);
     // find Neighbours
-    sortedPositionsBuffer.bind();
+    partIndexBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
+            partIndexBuffer.bufferId());
+    sortedPositionsBuffer.bind();
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
             sortedPositionsBuffer.bufferId());
     voxelIndexBuffer.bind();
-    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
             voxelIndexBuffer.bufferId());
     neighbourBuffer.bind();
-    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
             neighbourBuffer.bufferId());
     dataBuffer.bind();
     updateData(timeStep);
-    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4,
             dataBuffer.bufferId());
     findNeighboursShader.bind();
     invoke_count = ceil(float(maxParticleCount)/float(CMP_THREAD_SIZE));
@@ -342,6 +345,7 @@ void Simulation::simulate(Time timeStep) {
     glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
     sync();
     findNeighboursShader.release();
+    partIndexBuffer.release();
     sortedPositionsBuffer.release();
     voxelIndexBuffer.release();
     neighbourBuffer.release();

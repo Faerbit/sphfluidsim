@@ -6,9 +6,9 @@ layout(std430, binding = 0) buffer VoxelIndex {
     ivec2 ind[];
 } voxelIndex;
 
-layout(std430, binding = 1) buffer SortPositions {
-    vec4 spos[];
-} sortPositions;
+layout(std430, binding = 1) buffer PartIndex {
+    ivec2 partInd[];
+} partIndex;
 
 
 uniform int work_items;
@@ -18,17 +18,17 @@ void main() {
     int id = int(_id);
     if (id <= work_items) {
         int first = 0;
-        int last = sortPositions.spos.length();
+        int last = partIndex.partInd.length();
         int result = -1;
-        int search_end = int(ceil(log(sortPositions.spos.length())/log(2)));
+        int search_end = int(ceil(log(partIndex.partInd.length())/log(2)));
         // binary search for particle with current voxel id
         for(int i = 0; i<search_end; i++) {
             int cur = int(floor((last-first)/2)) + first;
-            if (sortPositions.spos[cur].w == id) {
+            if (partIndex.partInd[cur].x == id) {
                 result = cur;
                 break;
             }
-            if (sortPositions.spos[cur].w < id) {
+            if (partIndex.partInd[cur].x < id) {
                 first = cur;
             }
             else {
@@ -40,8 +40,8 @@ void main() {
             // search end of voxel
             end = result;
             while(true) {
-                if (sortPositions.spos[end+1].w == id 
-                        && end < sortPositions.spos.length() -1) {
+                if (partIndex.partInd[end+1].x == id
+                        && end < partIndex.partInd.length() -1) {
                     end++;
                 }
                 else {
@@ -51,7 +51,7 @@ void main() {
 
             // search lowest particle id with current voxel id
             while(true) {
-                if (sortPositions.spos[result-1].w == id && result > 0) {
+                if (partIndex.partInd[result-1].x == id && result > 0) {
                     result--;
                 }
                 else {
