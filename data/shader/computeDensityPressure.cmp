@@ -35,7 +35,7 @@ void main() {
 
         // physics formula from
         // "Smoothed Particle Hydrodynamics" OpenCL Programming Webinar Series
-        // by AMD (November 29, 2019) Slide 14
+        // by AMD (November 29, 2010) Slide 14
 
         // condenses equations
         float h = interaction_radius;
