@@ -19,7 +19,7 @@ const int MAX_NO_INTERACT_PARTICLES = 32;
 
 const float PARTICLE_MASS = 1.0f;
 //const float PARTICLE_MASS = 0.000124f;
-const float GRAVITY = 9.81 * 100;
+const float GRAVITY = 9.81 * 10;
 
 // properties for water at 20 degrees celsius at 1 atm pressure
 const float DYNAMIC_VISCOSITY = 1002.0f;
