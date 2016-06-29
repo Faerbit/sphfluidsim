@@ -22,8 +22,10 @@ const float GRAVITY = 9.8;
 
 // properties for water at 20 degrees celsius at 1 atm pressure
 const float DYNAMIC_VISCOSITY = 1.002f;
-const float DENSITY = 998.2071f;
-const float KINEMATIC_VISCOSITY = DYNAMIC_VISCOSITY/DENSITY;
+const float RESTING_DENSITY = 998.2071f;
 //const float KINEMATIC_VISCOSITY = 0.018;
+
+// numerical property no real world correlation
+const float PRESSURE_FACTOR = 1.0f;
 
 #endif // CONSTANTS_H

@@ -20,7 +20,7 @@ public:
     std::shared_ptr<QOpenGLBuffer> getPositionsBuffer();
     int getParticleCount();
     void simulate(Time timeStep);
-    // TODO add time point
+    // TODO add time point and initial velocity
     void addFluidCuboid(float maxPartShare,
             float pos_x, float pos_y, float pos_z,
             float size_x, float size_y, float size_z);

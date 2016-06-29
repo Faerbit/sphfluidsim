@@ -12,7 +12,7 @@ layout(std430, binding = 1) buffer VoxelIndex {
 } voxelIndex;
 
 layout(std430, binding = 2) buffer SortVelocities {
-    float svel[];
+    vec4 svel[];
 } sortVelocities;
 
 layout(std430, binding = 3) buffer Positions {
@@ -42,8 +42,13 @@ const int voxel_count_y = int(ceil(domain_size_y/interaction_radius));
 const int voxel_count_z = int(ceil(domain_size_z/interaction_radius));
 
 const float particle_mass = $PARTICLE_MASS;
-const float kinematic_viscosity = $KINEMATIC_VISCOSITY;
+const float dynamic_viscosity = $DYNAMIC_VISCOSITY;
+const float resting_density = $RESTING_DENSITY;
+const float kinematic_viscosity = dynamic_viscosity/resting_density;
 const float gravity = $GRAVITY;
+const float pressure_factor = $PRESSURE_FACTOR;
+
+const float PI = 3.14159265359;
 
 int[$MAX_NO_INTERACT_PARTICLES] neighbourParts;
 int found_neighbour_parts = 0;
@@ -156,13 +161,28 @@ void getNeighbourParts(vec4 self, int own_id) {
 void main() {
     uint id = gl_GlobalInvocationID.x;
     if (id <= work_items) {
-        getNeighbourParts(sortPositions.spos[id], int(id));
-        // physics
-        for(int i=0; i<32; i++) {
-            sortVelocities.svel[id*36 + i] = float(neighbourParts[i]);
+        vec4 self_pos = sortPositions.spos[id];
+        getNeighbourParts(self_pos, int(id));
+        // physics formula from
+        // "Smoothed Particle Hydrodynamics" OpenCL Programming Webinar Series
+        // by AMD (November 29, 2019) Slide 14
+
+        // condenses equations
+        float h = interaction_radius;
+
+        // compute density
+        float density = 0.0;
+        for(int i = 0; i<found_neighbour_parts; i++) {
+            float _distance = distance(self_pos, sortPositions.spos[i]);
+            density += particle_mass * (315/(64*PI* pow(h, 9)))
+                * pow(pow(h, 2) - pow(_distance, 2), 3);
         }
-        sortVelocities.svel[id*36 + 32] = float(-13.37);
-        sortVelocities.svel[id*36 + 33] = float(found_neighbour_parts);
-        sortVelocities.svel[id*36 + 34] = float(-13.37);
+
+        // compute pressure term
+        float pressure = pressure_factor* (density - resting_density);
+        vec3 pressure_gradient = vec3(0.0);
+        for(int i = 0; i<found_neighbour_parts; i++) {
+            //pressure_gradient += particle_mass * ((pressure
+        }
     }
 }

@@ -102,8 +102,12 @@ Simulation::Simulation(int maxParticleCount,
     pair<string, string> var_gravity = 
         pair<string, string>("$GRAVITY", str(GRAVITY));
     // TODO make this configurable
-    pair<string, string> var_kinematic_viscosity = 
-        pair<string, string>("$KINEMATIC_VISCOSITY", str(KINEMATIC_VISCOSITY));
+    pair<string, string> var_dynamic_viscosity =
+        pair<string, string>("$DYNAMIC_VISCOSITY", str(DYNAMIC_VISCOSITY));
+    pair<string, string> var_resting_density =
+        pair<string, string>("$RESTING_DENSITY", str(RESTING_DENSITY));
+    pair<string, string> var_pressure_factor =
+        pair<string, string>("$PRESSURE_FACTOR", str(PRESSURE_FACTOR));
     vars.push_back(var_domain_size_x);
     vars.push_back(var_domain_size_y);
     vars.push_back(var_domain_size_z);
@@ -111,7 +115,9 @@ Simulation::Simulation(int maxParticleCount,
     vars.push_back(var_max_no_interact_parts);
     vars.push_back(var_particle_mass);
     vars.push_back(var_gravity);
-    vars.push_back(var_kinematic_viscosity);
+    vars.push_back(var_dynamic_viscosity);
+    vars.push_back(var_resting_density);
+    vars.push_back(var_pressure_factor);
     physicsShader = ComputeShader("physics.cmp", "work_items", vars);
 
     srand(time(0));
@@ -207,12 +213,8 @@ void Simulation::init() {
     sortedPositionsBuffer.allocate(maxParticleCount * 4 * sizeof(GLfloat));
     sortedPositionsBuffer.release();
 
-    // TODO remove temporary stuff
     sortedVelocitiesBuffer.bind();
-    //sortedVelocitiesBuffer.allocate(maxParticleCount * 4 * sizeof(GLfloat));
-    vector<GLfloat> tmp = vector<GLfloat>();
-    tmp.assign(maxParticleCount * 36, 0.0f);
-    sortedVelocitiesBuffer.allocate(&tmp[0], maxParticleCount * 36 * sizeof(GLfloat));
+    sortedVelocitiesBuffer.allocate(maxParticleCount * 4 * sizeof(GLfloat));
     sortedVelocitiesBuffer.release();
 
     int voxel_size_x = ceil(domain_size_x/INTERACTION_RADIUS);
@@ -305,8 +307,6 @@ void Simulation::simulate(Time timeStep) {
     sortedPositionsBuffer.release();
     debugPrintBuffer<GLint>("voxelIndex", voxelIndexBuffer, 2, voxelCount);
     // physics
-    debugPrintBuffer<GLfloat>("neighbour Voxels", sortedVelocitiesBuffer,
-            36, maxParticleCount);
     sortedPositionsBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
             sortedPositionsBuffer.bufferId());
@@ -338,8 +338,7 @@ void Simulation::simulate(Time timeStep) {
     positionsBuffer->release();
     velocitiesBuffer.release();
     dataBuffer.release();
-    debugPrintBuffer<GLfloat>("neighbour Voxels", sortedVelocitiesBuffer,
-            36, maxParticleCount);
+    debugPrintBuffer<GLfloat>("velocities", velocitiesBuffer, 4, maxParticleCount);
     QApplication::quit();
 }
 
