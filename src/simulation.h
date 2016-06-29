@@ -46,7 +46,7 @@ private:
     QOpenGLBuffer sortedVelocitiesBuffer;
     QOpenGLBuffer voxelIndexBuffer;
     QOpenGLBuffer neighbourBuffer;
-    QOpenGLBuffer pressureDensityBuffer;
+    QOpenGLBuffer densityPressureBuffer;
     QOpenGLBuffer dataBuffer;
     std::vector<QVector4D> startPositions;
     std::vector<QVector4D> startVelocities;

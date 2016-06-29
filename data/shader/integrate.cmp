@@ -1,0 +1,85 @@
+#version 430
+
+layout(local_size_x = $THREAD_SIZE, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding = 0) buffer Neighbours {
+    int neigh[];
+} neighbours;
+
+layout(std430, binding = 1) buffer SortPositions {
+    vec4 spos[];
+} sortPositions;
+
+layout(std430, binding = 2) buffer SortVelocities {
+    vec4 svel[];
+} sortVelocities;
+
+layout(std430, binding = 3) buffer DensityPressure {
+    vec2 dp[];
+} densityPressure;
+
+layout(std430, binding = 4) buffer Positions {
+    vec4 pos[];
+} positions;
+
+layout(std430, binding = 5) buffer Velocities {
+    vec4 vel[];
+} velocities;
+
+// hacky work around because apparently simple uniforms are a thing of the
+// devil
+// data[0] = timeStep
+// data[1] = randomNumber
+layout(std430, binding = 6) buffer Data{
+    float data[];
+} data;
+
+uniform int work_items;
+
+const int max_no_interact_particles = $MAX_NO_INTERACT_PARTICLES;
+
+const float interaction_radius = $INTERACTION_RADIUS;
+const float particle_mass = $PARTICLE_MASS;
+const float dynamic_viscosity = $DYNAMIC_VISCOSITY;
+const float resting_density = $RESTING_DENSITY;
+const float kinematic_viscosity = dynamic_viscosity/resting_density;
+const float gravity = $GRAVITY;
+
+const float PI = 3.14159265359;
+
+void main() {
+    uint id = gl_GlobalInvocationID.x;
+    if (id <= work_items) {
+        vec3 self_pos = vec3(sortPositions.spos[id]);
+
+        int found_neighbour_parts = neighbours.neigh[
+            id * (max_no_interact_particles + 1) + max_no_interact_particles];
+
+        // physics formula from
+        // "Smoothed Particle Hydrodynamics" OpenCL Programming Webinar Series
+        // by AMD (November 29, 2019) Slide 14
+
+        // condenses equations
+        float h = interaction_radius;
+
+        // compute pressure gradient
+        float self_density = densityPressure.dp[id].x;
+        float self_pressure = densityPressure.dp[id].y;
+
+        vec3 pressure_gradient = vec3(0.0);
+        for(int i = 0; i<found_neighbour_parts; i++) {
+            int neighbour = neighbours.neigh[
+                id * (max_no_interact_particles + 1) + i];
+            vec3 pos = vec3(sortPositions.spos[neighbour]);
+            float density = densityPressure.dp[neighbour].x;
+            float pressure = densityPressure.dp[neighbour].y;
+            pressure_gradient += particle_mass * 
+                ((self_pressure/pow(self_density, 2)) + 
+                    (pressure/pow(density, 2)))
+                * (-45.0/(PI*pow(h, 6)))*pow(h-distance(self_pos, pos), 2)
+                * ((self_pos - pos)/(distance(self_pos, pos)));
+        }
+        // debug
+        velocities.vel[id] = vec4(pressure_gradient, -13.37);
+    }
+}
