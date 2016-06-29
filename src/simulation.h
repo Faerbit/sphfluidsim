@@ -45,6 +45,8 @@ private:
     QOpenGLBuffer sortedPositionsBuffer;
     QOpenGLBuffer sortedVelocitiesBuffer;
     QOpenGLBuffer voxelIndexBuffer;
+    QOpenGLBuffer neighbourBuffer;
+    QOpenGLBuffer pressureDensityBuffer;
     QOpenGLBuffer dataBuffer;
     std::vector<QVector4D> startPositions;
     std::vector<QVector4D> startVelocities;
@@ -52,7 +54,9 @@ private:
     ComputeShader voxelizeShader;
     ComputeShader sortPostPassShader;
     ComputeShader indexVoxelShader;
-    ComputeShader physicsShader;
+    ComputeShader findNeighboursShader;
+    ComputeShader computeDensityPressureShader;
+    ComputeShader integrateShader;
     void sync();
     std::string str(int i);
     std::string str(float f);

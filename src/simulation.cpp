@@ -63,6 +63,16 @@ Simulation::Simulation(int maxParticleCount,
     voxelIndexBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
     voxelIndexBuffer.release();
 
+    neighbourBuffer.create();
+    neighbourBuffer.bind();
+    neighbourBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    neighbourBuffer.release();
+
+    pressureDensityBuffer.create();
+    pressureDensityBuffer.bind();
+    pressureDensityBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    pressureDensityBuffer.release();
+
     dataBuffer.create();
     dataBuffer.bind();
     dataBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
@@ -99,6 +109,13 @@ Simulation::Simulation(int maxParticleCount,
                 str(MAX_NO_INTERACT_PARTICLES));
     pair<string, string> var_particle_mass = 
         pair<string, string>("$PARTICLE_MASS", str(PARTICLE_MASS));
+    vars.push_back(var_domain_size_x);
+    vars.push_back(var_domain_size_y);
+    vars.push_back(var_domain_size_z);
+    vars.push_back(var_interaction_radius);
+    vars.push_back(var_max_no_interact_parts);
+    findNeighboursShader = ComputeShader("findNeighbours.cmp",
+            "work_items", vars);
     pair<string, string> var_gravity = 
         pair<string, string>("$GRAVITY", str(GRAVITY));
     // TODO make this configurable
@@ -108,17 +125,7 @@ Simulation::Simulation(int maxParticleCount,
         pair<string, string>("$RESTING_DENSITY", str(RESTING_DENSITY));
     pair<string, string> var_pressure_factor =
         pair<string, string>("$PRESSURE_FACTOR", str(PRESSURE_FACTOR));
-    vars.push_back(var_domain_size_x);
-    vars.push_back(var_domain_size_y);
-    vars.push_back(var_domain_size_z);
-    vars.push_back(var_interaction_radius);
-    vars.push_back(var_max_no_interact_parts);
-    vars.push_back(var_particle_mass);
-    vars.push_back(var_gravity);
-    vars.push_back(var_dynamic_viscosity);
-    vars.push_back(var_resting_density);
-    vars.push_back(var_pressure_factor);
-    physicsShader = ComputeShader("physics.cmp", "work_items", vars);
+    //physicsShader = ComputeShader("physics.cmp", "work_items", vars);
 
     srand(time(0));
 }
@@ -217,6 +224,15 @@ void Simulation::init() {
     sortedVelocitiesBuffer.allocate(maxParticleCount * 4 * sizeof(GLfloat));
     sortedVelocitiesBuffer.release();
 
+    neighbourBuffer.bind();
+    neighbourBuffer.allocate(maxParticleCount * (MAX_NO_INTERACT_PARTICLES + 1)
+            * sizeof(GLint));
+    neighbourBuffer.release();
+
+    pressureDensityBuffer.bind();
+    pressureDensityBuffer.allocate(maxParticleCount * 2 * sizeof(GLfloat));
+    pressureDensityBuffer.release();
+
     int voxel_size_x = ceil(domain_size_x/INTERACTION_RADIUS);
     int voxel_size_y = ceil(domain_size_y/INTERACTION_RADIUS);
     int voxel_size_z = ceil(domain_size_z/INTERACTION_RADIUS);
@@ -306,14 +322,33 @@ void Simulation::simulate(Time timeStep) {
     voxelIndexBuffer.release();
     sortedPositionsBuffer.release();
     debugPrintBuffer<GLint>("voxelIndex", voxelIndexBuffer, 2, voxelCount);
-    // physics
+    // find Neighbours
     sortedPositionsBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0,
             sortedPositionsBuffer.bufferId());
     voxelIndexBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
             voxelIndexBuffer.bufferId());
-    sortedVelocitiesBuffer.bind();
+    neighbourBuffer.bind();
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
+            neighbourBuffer.bufferId());
+    dataBuffer.bind();
+    updateData(timeStep);
+    glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3,
+            dataBuffer.bufferId());
+    findNeighboursShader.bind();
+    invoke_count = ceil(float(maxParticleCount)/float(CMP_THREAD_SIZE));
+    findNeighboursShader.setWorkItems(maxParticleCount);
+    glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
+    sync();
+    findNeighboursShader.release();
+    sortedPositionsBuffer.release();
+    voxelIndexBuffer.release();
+    neighbourBuffer.release();
+    dataBuffer.release();
+    debugPrintBuffer<GLint>("neighbours", neighbourBuffer,
+            MAX_NO_INTERACT_PARTICLES + 1, maxParticleCount);
+    /*sortedVelocitiesBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
             sortedVelocitiesBuffer.bufferId());
     positionsBuffer->bind();
@@ -337,8 +372,8 @@ void Simulation::simulate(Time timeStep) {
     sortedVelocitiesBuffer.release();
     positionsBuffer->release();
     velocitiesBuffer.release();
-    dataBuffer.release();
-    debugPrintBuffer<GLfloat>("velocities", velocitiesBuffer, 4, maxParticleCount);
+    dataBuffer.release();*/
+    //debugPrintBuffer<GLfloat>("velocities", velocitiesBuffer, 4, maxParticleCount);
     QApplication::quit();
 }
 
