@@ -33,7 +33,7 @@ GLWidget::GLWidget(QWidget* parent) :
             Qt::DirectConnection);
 
     // as soon as possible
-    timer.setInterval(0);
+    timer.setInterval(1/60.0f);
     timer.start();
     start = Clock::now();
     lastSimulationTimePoint = start;
@@ -68,16 +68,14 @@ void GLWidget::initializeGL () {
 }
 
 void GLWidget::load() {
-    simulation = Simulation(10, 4.0f, 4.0f, 4.0f);
-    //simulation = Simulation(10, 10.0f, 10.0f, 10.0f);
+    simulation = Simulation(2500, 4.0f, 4.0f, 4.0f, false);
     simulation.addFluidCuboid(1.0f,
-            1.0f, 3.0f, 1.0f,
-            1.0f, 1.0f, 1.0f);
-            //2.0f, 1.0f, 5.0f);
+            2.0f, 0.0f, 2.0f,
+            1.0f, 3.0f, 1.0f);
     simulation.init();
     particles = Particles("sphere_low.obj",
             simulation.getPositionsBuffer(),
-            QVector3D(-5.0f , -5.0f, 0.0f),
+            QVector3D(-2.0f , 0.0f, -2.0f),
             simulation.getParticleCount(),
             simulation.getMinDensity()
             );
@@ -161,10 +159,10 @@ void GLWidget::_update() {
     lastSimulationTimePoint = now;
     Time time = now - start;
     qDebug() << "current time: " << time.count();
-    float rotationPeriod = 20.0f;
+    /*float rotationPeriod = 20.0f;
     float fTime = time.count();
     float angle = 360.0f/rotationPeriod * fTime;
-    particles.setRotation_y(angle);
+    particles.setRotation_y(angle);*/
     paintGL();
     update();
 }

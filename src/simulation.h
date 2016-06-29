@@ -16,7 +16,7 @@ class Simulation {
 public:
     Simulation();
     Simulation(int maxParticleCount,
-            float domain_size_x, float domain_size_y, float domain_size_z);
+            float domain_size_x, float domain_size_y, float domain_size_z, bool debug_print);
     std::shared_ptr<QOpenGLBuffer> getPositionsBuffer();
     int getParticleCount();
     void simulate(Time timeStep);
@@ -57,7 +57,6 @@ private:
     ComputeShader findNeighboursShader;
     ComputeShader computeDensityPressureShader;
     ComputeShader integrateShader;
-    void sync();
     std::string str(int i);
     std::string str(float f);
     void updateData(Time timeStep);
@@ -67,6 +66,7 @@ private:
     template<typename T>
     void debugPrintBuffer(std::string name, QOpenGLBuffer buffer, 
             int vec_size, int ele_count);
+    bool debugPrintBufferContents;
 };
 
 #endif // SIMULATION_H

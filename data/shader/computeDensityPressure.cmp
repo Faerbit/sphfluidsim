@@ -51,7 +51,7 @@ void main() {
         }
 
         // compute pressure
-        float pressure = pressure_factor * (density - resting_density);
+        float pressure = 0.1* (density - pressure_factor * resting_density);
 
         densityPressure.dp[id] = vec2(density, pressure);
     }

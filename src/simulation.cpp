@@ -16,11 +16,13 @@ Simulation::Simulation() {
 }
 
 Simulation::Simulation(int maxParticleCount, 
-        float domain_size_x, float domain_size_y, float domain_size_z) {
+        float domain_size_x, float domain_size_y, float domain_size_z,
+        bool debug_print) {
     this->maxParticleCount = maxParticleCount;
     this->domain_size_x = domain_size_x;
     this->domain_size_y = domain_size_y;
     this->domain_size_z = domain_size_z;
+    debugPrintBufferContents = debug_print;
 
     minDensity = numeric_limits<float>::max();
 
@@ -269,6 +271,13 @@ void Simulation::simulate(Time timeStep) {
     if (timeStep.count() <= 0) {
         return;
     }
+
+    static int counter = 0;
+    counter ++;
+    /*if (counter == 142) {
+        QApplication::quit();
+    }*/
+    qDebug() << "sim step: " << counter;
     qDebug() << "timestep: " << timeStep.count();
     // voxelize particles
     positionsBuffer->bind();
@@ -277,12 +286,8 @@ void Simulation::simulate(Time timeStep) {
             positionsBuffer->bufferId());
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
             partIndexBuffer.bufferId());
-    voxelizeShader.bind();
-    voxelizeShader.setWorkItems(maxParticleCount);
     int invoke_count = ceil(float(maxParticleCount)/float(CMP_THREAD_SIZE));
-    glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
-    sync();
-    voxelizeShader.release();
+    voxelizeShader.invoke(invoke_count, maxParticleCount);
     positionsBuffer->release();
     partIndexBuffer.release();
     //debugPrintBuffer<GLfloat>("positions", positionsBuffer, 4);
@@ -319,11 +324,7 @@ void Simulation::simulate(Time timeStep) {
     sortedVelocitiesBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4,
             sortedVelocitiesBuffer.bufferId());
-    sortPostPassShader.bind();
-    sortPostPassShader.setWorkItems(maxParticleCount);
-    glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
-    sync();
-    sortPostPassShader.release();
+    sortPostPassShader.invoke(invoke_count, maxParticleCount);
     partIndexBuffer.release();
     positionsBuffer->release();
     velocitiesBuffer.release();
@@ -339,12 +340,8 @@ void Simulation::simulate(Time timeStep) {
     partIndexBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
             partIndexBuffer.bufferId());
-    indexVoxelShader.bind();
-    indexVoxelShader.setWorkItems(voxelCount);
     invoke_count = ceil(float(voxelCount)/float(CMP_THREAD_SIZE));
-    glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
-    sync();
-    indexVoxelShader.release();
+    indexVoxelShader.invoke(invoke_count, voxelCount);
     voxelIndexBuffer.release();
     partIndexBuffer.release();
     debugPrintBuffer<GLint>("voxelIndex", voxelIndexBuffer, 2, voxelCount);
@@ -365,12 +362,8 @@ void Simulation::simulate(Time timeStep) {
     updateData(timeStep);
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4,
             dataBuffer.bufferId());
-    findNeighboursShader.bind();
     invoke_count = ceil(float(maxParticleCount)/float(CMP_THREAD_SIZE));
-    findNeighboursShader.setWorkItems(maxParticleCount);
-    glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
-    sync();
-    findNeighboursShader.release();
+    findNeighboursShader.invoke(invoke_count, maxParticleCount);
     partIndexBuffer.release();
     sortedPositionsBuffer.release();
     voxelIndexBuffer.release();
@@ -388,11 +381,7 @@ void Simulation::simulate(Time timeStep) {
     densityPressureBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2,
             densityPressureBuffer.bufferId());
-    computeDensityPressureShader.bind();
-    computeDensityPressureShader.setWorkItems(maxParticleCount);
-    glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
-    sync();
-    computeDensityPressureShader.release(); 
+    computeDensityPressureShader.invoke(invoke_count, maxParticleCount);
     neighbourBuffer.release();
     sortedPositionsBuffer.release();
     densityPressureBuffer.release();
@@ -420,12 +409,7 @@ void Simulation::simulate(Time timeStep) {
     dataBuffer.bind();
     glFuncs::funcs()->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6,
             dataBuffer.bufferId());
-    invoke_count = ceil(float(maxParticleCount)/float(CMP_THREAD_SIZE));
-    integrateShader.bind();
-    integrateShader.setWorkItems(maxParticleCount);
-    glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
-    sync();
-    integrateShader.release();
+    integrateShader.invoke(invoke_count, maxParticleCount);
     neighbourBuffer.release();
     sortedPositionsBuffer.release();
     sortedVelocitiesBuffer.release();
@@ -437,17 +421,13 @@ void Simulation::simulate(Time timeStep) {
             4, maxParticleCount);
     debugPrintBuffer<GLfloat>("velocities", velocitiesBuffer,
             4, maxParticleCount);
-    static int counter = 0;
-    if (counter == 1) {
-        //QApplication::quit();
-    }
-    counter ++;
 }
 
 // assumes dataBuffer is already bound
 void Simulation::updateData(Time timeStep) {
     vector<GLfloat> data = vector<GLfloat>(2);
-    data[0] = timeStep.count();
+    //data[0] = timeStep.count();
+    data[0] = 0.0005f;
     // random float from 0.0 to 1.0
     data[1] = static_cast<GLfloat>(rand()) / static_cast<GLfloat>(RAND_MAX);
     dataBuffer.write(0, &data[0], 2 * sizeof(GLfloat));
@@ -456,45 +436,43 @@ void Simulation::updateData(Time timeStep) {
 template<typename T>
 void Simulation::debugPrintBuffer(string name, shared_ptr<QOpenGLBuffer> buffer,
         int vec_size, int ele_count) {
-    vector<T> debug_buffer = vector<T>(vec_size * ele_count);
-    buffer->bind();
-    if (buffer->read(0, &debug_buffer[0],
-                vec_size * ele_count * sizeof(T))) {
-        cout << "Buffer " << name << ": ";
-        for (auto item : debug_buffer) {
-            cout << item << ", ";
+    if (debugPrintBufferContents) {
+        vector<T> debug_buffer = vector<T>(vec_size * ele_count);
+        buffer->bind();
+        if (buffer->read(0, &debug_buffer[0],
+                    vec_size * ele_count * sizeof(T))) {
+            cout << "Buffer " << name << ": ";
+            for (auto item : debug_buffer) {
+                cout << item << ", ";
+            }
+            cout << endl;
         }
-        cout << endl;
+        else {
+            cout << "Failed to read buffer" << endl;
+        }
+        buffer->release();
     }
-    else {
-        cout << "Failed to read buffer" << endl;
-    }
-    buffer->release();
 }
 
 template<typename T>
 void Simulation::debugPrintBuffer(string name, QOpenGLBuffer buffer,
         int vec_size, int ele_count) {
-    vector<T> debug_buffer = vector<T>(vec_size * ele_count);
-    buffer.bind();
-    if (buffer.read(0, &debug_buffer[0],
-                vec_size * ele_count * sizeof(T))) {
-        cout << "Buffer " << name << ": ";
-        for (auto item : debug_buffer) {
-            //if(item != 1.55012e-41) {
-            cout << item << ", ";
-            //}
+    if (debugPrintBufferContents) {
+        vector<T> debug_buffer = vector<T>(vec_size * ele_count);
+        buffer.bind();
+        if (buffer.read(0, &debug_buffer[0],
+                    vec_size * ele_count * sizeof(T))) {
+            cout << "Buffer " << name << ": ";
+            for (auto item : debug_buffer) {
+                cout << item << ", ";
+            }
+            cout << endl;
         }
-        cout << endl;
+        else {
+            cout << "Failed to read buffer" << endl;
+        }
+        buffer.release();
     }
-    else {
-        cout << "Failed to read buffer" << endl;
-    }
-    buffer.release();
-}
-
-void Simulation::sync() {
-    glFuncs::funcs()->glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 float Simulation::getMinDensity() {

@@ -1,13 +1,18 @@
 #include "computeshader.h"
 #include "constants.h"
+#include "glfuncs.h"
 #include <iostream>
 #include <fstream>
 #include <streambuf>
 #include <string>
 #include <ctime>
 #include <cstdlib>
+#include <csignal>
+#include "unistd.h"
 
 using namespace std;
+
+string ComputeShader::cur_shader_file_path = "";
 
 ComputeShader::ComputeShader() {
     shaderProgram = nullptr;
@@ -51,6 +56,11 @@ ComputeShader::ComputeShader(std::string computeShaderFilePath,
         exit(1);
     }
     workItemsUniform = getLocation(workItemsUniformName);
+    filePath = computeShaderFilePath;
+    #ifdef WATCHDOG
+        qDebug() << "Installing watchdog handler";
+        signal(SIGALRM, ComputeShader::signal_handler);
+    #endif 
 }
 
 int ComputeShader::getLocation(std::string uniformName) {
@@ -60,6 +70,29 @@ int ComputeShader::getLocation(std::string uniformName) {
         exit(1);
     }
     return ret;
+}
+
+void ComputeShader::signal_handler(int signal) {
+    cerr << "Watchdog timer for shader '" << cur_shader_file_path
+        << "' expired. Killing application." << endl;
+    exit(1);
+}
+
+void ComputeShader::invoke(int invoke_count, int work_items) {
+    bind();
+    setWorkItems(work_items);
+    #ifdef WATCHDOG
+        cur_shader_file_path = filePath;
+        // set watchdog
+        alarm(1);
+    #endif
+    glFuncs::funcs()->glDispatchCompute(invoke_count, 1, 1);
+    glFuncs::funcs()->glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    #ifdef WATCHDOG
+        // deactivate watchdog
+        alarm(0);
+    #endif
+    release();
 }
 
 void ComputeShader::bind() {

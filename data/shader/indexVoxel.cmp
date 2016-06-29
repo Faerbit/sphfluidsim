@@ -39,7 +39,12 @@ void main() {
         if (result > -1) {
             // search end of voxel
             end = result;
+            int counter = 0;
             while(true) {
+                counter++;
+                if(counter >= 1000) {
+                    break;
+                }
                 if (partIndex.partInd[end+1].x == id
                         && end < partIndex.partInd.length() -1) {
                     end++;
@@ -49,8 +54,12 @@ void main() {
                 }
             }
 
+            counter = 0;
             // search lowest particle id with current voxel id
             while(true) {
+                if(counter >= 1000) {
+                    break;
+                }
                 if (partIndex.partInd[result-1].x == id && result > 0) {
                     result--;
                 }

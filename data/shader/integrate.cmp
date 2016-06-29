@@ -85,8 +85,8 @@ void main() {
         }
 
         // apply boundary conditions
-        /*float a = 2.0;
-        float b = 2.0;
+        /*float a = 20.0;
+        float b = 20.0;
         // boundary function: f(x) = a*exp(-bx)
         float distance_to_x_min = self_pos.x - 0.0;
         float distance_to_x_max = domain_size_x - self_pos.x;
@@ -132,12 +132,12 @@ void main() {
         velocities.vel[id] = vec4(res_velocity, 0.0);
 
         // apply boundary conditions
-        res_pos.x = max(0.0, res_pos.x);
-        res_pos.x = min(domain_size_x, res_pos.x);
-        res_pos.y = max(0.0, res_pos.y);
-        res_pos.y = min(domain_size_y, res_pos.y);
-        res_pos.z = max(0.0, res_pos.z);
-        res_pos.z = min(domain_size_z, res_pos.z);
+        res_pos.x = max(0.1, res_pos.x);
+        res_pos.x = min(domain_size_x-0.1, res_pos.x);
+        res_pos.y = max(0.1, res_pos.y);
+        res_pos.y = min(domain_size_y-0.1, res_pos.y);
+        res_pos.z = max(0.1, res_pos.z);
+        res_pos.z = min(domain_size_z-0.1, res_pos.z);
         positions.pos[id] = vec4(res_pos, 0.0);
     }
 }

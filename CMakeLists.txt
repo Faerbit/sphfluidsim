@@ -28,6 +28,11 @@ set(LIBRARIES ${LIBRARIES} ${QT_LIBRARIES})
 set(LIBRARIES ${LIBRARIES} ${OPENGL_LIBRARIES})
 set(LIBRARIES ${LIBRARIES} ${ASSIMP_LIBRARIES})
 
+# enable watchdog on Linux
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    add_definitions("-DWATCHDOG")
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
 add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
 qt5_use_modules(${PROJECT_NAME} Widgets OpenGL)
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES})

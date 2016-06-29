@@ -108,7 +108,12 @@ void main() {
         for(int i = 0; i<27; i++) {
             voxels_to_search[i] = true;
         }
+        int counter = 0;
         while (found_neighbour_parts<max_no_interact_particles) {
+            counter++;
+            if (counter >= 3000) {
+                break;
+            }
             bool unsearched_voxels = false;
             for(int i= 0; i<27; i++) {
                 if (voxels_to_search[i] == true) {
