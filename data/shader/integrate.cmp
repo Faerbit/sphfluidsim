@@ -38,6 +38,10 @@ uniform int work_items;
 
 const int max_no_interact_particles = $MAX_NO_INTERACT_PARTICLES;
 
+const float domain_size_x = $DOMAIN_SIZE_X;
+const float domain_size_y = $DOMAIN_SIZE_Y;
+const float domain_size_z = $DOMAIN_SIZE_Z;
+
 const float interaction_radius = $INTERACTION_RADIUS;
 const float particle_mass = $PARTICLE_MASS;
 const float dynamic_viscosity = $DYNAMIC_VISCOSITY;
@@ -80,7 +84,27 @@ void main() {
                 * ((self_pos - pos)/(distance(self_pos, pos)));
         }
 
-        // TODO add boundary conditions
+        // apply boundary conditions
+        /*float a = 2.0;
+        float b = 2.0;
+        // boundary function: f(x) = a*exp(-bx)
+        float distance_to_x_min = self_pos.x - 0.0;
+        float distance_to_x_max = domain_size_x - self_pos.x;
+
+        pressure_gradient.x += a * exp(-b*distance_to_x_min);
+        pressure_gradient.x -= a * exp(-b*distance_to_x_max);
+
+        float distance_to_y_min = self_pos.y - 0.0;
+        float distance_to_y_max = domain_size_y - self_pos.y;
+
+        pressure_gradient.y += a * exp(-b*distance_to_y_min);
+        pressure_gradient.y -= a * exp(-b*distance_to_y_max);
+
+        float distance_to_z_min = self_pos.z - 0.0;
+        float distance_to_z_max = domain_size_z - self_pos.z;
+
+        pressure_gradient.z += a * exp(-b*distance_to_z_min);
+        pressure_gradient.z -= a * exp(-b*distance_to_z_max);*/
 
         // compute viscosity term
         vec3 self_velocity = vec3(sortVelocities.svel[id]);
@@ -106,6 +130,14 @@ void main() {
         vec3 res_velocity = self_velocity + time_step * acceleration;
         vec3 res_pos = self_pos + time_step * res_velocity;
         velocities.vel[id] = vec4(res_velocity, 0.0);
+
+        // apply boundary conditions
+        res_pos.x = max(0.0, res_pos.x);
+        res_pos.x = min(domain_size_x, res_pos.x);
+        res_pos.y = max(0.0, res_pos.y);
+        res_pos.y = min(domain_size_y, res_pos.y);
+        res_pos.z = max(0.0, res_pos.z);
+        res_pos.z = min(domain_size_z, res_pos.z);
         positions.pos[id] = vec4(res_pos, 0.0);
     }
 }

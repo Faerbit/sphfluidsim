@@ -137,6 +137,9 @@ Simulation::Simulation(int maxParticleCount,
         pair<string, string>("$GRAVITY", str(GRAVITY));
     vars.clear();
     vars.push_back(var_thread_size);
+    vars.push_back(var_domain_size_x);
+    vars.push_back(var_domain_size_y);
+    vars.push_back(var_domain_size_z);
     vars.push_back(var_interaction_radius);
     vars.push_back(var_resting_density);
     vars.push_back(var_particle_mass);
@@ -266,6 +269,7 @@ void Simulation::simulate(Time timeStep) {
     if (timeStep.count() <= 0) {
         return;
     }
+    qDebug() << "timestep: " << timeStep.count();
     // voxelize particles
     positionsBuffer->bind();
     partIndexBuffer.bind();
@@ -429,6 +433,8 @@ void Simulation::simulate(Time timeStep) {
     positionsBuffer->release();
     velocitiesBuffer.release();
     dataBuffer.release();
+    debugPrintBuffer<GLfloat>("positions", positionsBuffer,
+            4, maxParticleCount);
     debugPrintBuffer<GLfloat>("velocities", velocitiesBuffer,
             4, maxParticleCount);
     static int counter = 0;

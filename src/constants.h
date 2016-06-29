@@ -27,6 +27,6 @@ const float RESTING_DENSITY = 998.2071f;
 //const float KINEMATIC_VISCOSITY = 0.018;
 
 // numerical property no real world correlation
-const float PRESSURE_FACTOR = 0.000001f;
+const float PRESSURE_FACTOR = 0.0001f;
 
 #endif // CONSTANTS_H

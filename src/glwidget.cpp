@@ -71,7 +71,7 @@ void GLWidget::load() {
     simulation = Simulation(10, 4.0f, 4.0f, 4.0f);
     //simulation = Simulation(10, 10.0f, 10.0f, 10.0f);
     simulation.addFluidCuboid(1.0f,
-            1.0f, 1.0f, 1.0f,
+            1.0f, 3.0f, 1.0f,
             1.0f, 1.0f, 1.0f);
             //2.0f, 1.0f, 5.0f);
     simulation.init();
@@ -160,6 +160,7 @@ void GLWidget::_update() {
     simulation.simulate(now - lastSimulationTimePoint);
     lastSimulationTimePoint = now;
     Time time = now - start;
+    qDebug() << "current time: " << time.count();
     float rotationPeriod = 20.0f;
     float fTime = time.count();
     float angle = 360.0f/rotationPeriod * fTime;
