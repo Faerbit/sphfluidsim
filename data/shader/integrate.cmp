@@ -43,7 +43,7 @@ const float particle_mass = $PARTICLE_MASS;
 const float dynamic_viscosity = $DYNAMIC_VISCOSITY;
 const float resting_density = $RESTING_DENSITY;
 const float kinematic_viscosity = dynamic_viscosity/resting_density;
-const float gravity = $GRAVITY;
+const float gravity_value = $GRAVITY;
 
 const float PI = 3.14159265359;
 
@@ -73,13 +73,39 @@ void main() {
             vec3 pos = vec3(sortPositions.spos[neighbour]);
             float density = densityPressure.dp[neighbour].x;
             float pressure = densityPressure.dp[neighbour].y;
-            pressure_gradient += particle_mass * 
-                ((self_pressure/pow(self_density, 2)) + 
+            pressure_gradient += particle_mass
+                * ((self_pressure/pow(self_density, 2)) + 
                     (pressure/pow(density, 2)))
                 * (-45.0/(PI*pow(h, 6)))*pow(h-distance(self_pos, pos), 2)
                 * ((self_pos - pos)/(distance(self_pos, pos)));
         }
-        // debug
-        velocities.vel[id] = vec4(pressure_gradient, -13.37);
+
+        // TODO add boundary conditions
+
+        // compute viscosity term
+        vec3 self_velocity = vec3(sortVelocities.svel[id]);
+        vec3 viscosity_gradient = vec3(0.0);
+        for(int i = 0; i<found_neighbour_parts; i++) {
+            int neighbour = neighbours.neigh[
+                id * (max_no_interact_particles + 1) + i];
+            vec3 pos = vec3(sortPositions.spos[neighbour]);
+            float density = densityPressure.dp[neighbour].x;
+            //vec3 velocity = vec3(sortVelocities.svel[neighbour]);
+            vec3 velocity = vec3 (1.0, 2.0, 1.0);
+            viscosity_gradient += particle_mass
+                * ((velocity - self_velocity)/density) 
+                * (45.0/(PI*pow(h, 6)))
+                * (h - distance(pos, self_pos));
+        }
+        viscosity_gradient *= kinematic_viscosity/self_density;
+
+        // compute acceleration
+        vec3 gravity = vec3(0.0, -gravity_value, 0.0);
+        vec3 acceleration = gravity - pressure_gradient + viscosity_gradient;
+        float time_step = data.data[0];
+        vec3 res_velocity = self_velocity + time_step * acceleration;
+        vec3 res_pos = self_pos + time_step * res_velocity;
+        velocities.vel[id] = vec4(res_velocity, 0.0);
+        positions.pos[id] = vec4(res_pos, 0.0);
     }
 }

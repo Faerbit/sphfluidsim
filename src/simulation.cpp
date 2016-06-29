@@ -262,6 +262,10 @@ void Simulation::init() {
 }
 
 void Simulation::simulate(Time timeStep) {
+    // discard bullshit timeSteps
+    if (timeStep.count() <= 0) {
+        return;
+    }
     // voxelize particles
     positionsBuffer->bind();
     partIndexBuffer.bind();
@@ -427,7 +431,11 @@ void Simulation::simulate(Time timeStep) {
     dataBuffer.release();
     debugPrintBuffer<GLfloat>("velocities", velocitiesBuffer,
             4, maxParticleCount);
-    QApplication::quit();
+    static int counter = 0;
+    if (counter == 1) {
+        //QApplication::quit();
+    }
+    counter ++;
 }
 
 // assumes dataBuffer is already bound

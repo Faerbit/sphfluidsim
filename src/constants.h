@@ -18,14 +18,15 @@ const float INTERACTION_RADIUS = 1.0f;
 const int MAX_NO_INTERACT_PARTICLES = 32;
 
 const float PARTICLE_MASS = 1.0f;
+//const float PARTICLE_MASS = 0.000124f;
 const float GRAVITY = 9.8;
 
 // properties for water at 20 degrees celsius at 1 atm pressure
-const float DYNAMIC_VISCOSITY = 1.002f;
+const float DYNAMIC_VISCOSITY = 1002.0f;
 const float RESTING_DENSITY = 998.2071f;
 //const float KINEMATIC_VISCOSITY = 0.018;
 
 // numerical property no real world correlation
-const float PRESSURE_FACTOR = 1.0f;
+const float PRESSURE_FACTOR = 0.000001f;
 
 #endif // CONSTANTS_H
