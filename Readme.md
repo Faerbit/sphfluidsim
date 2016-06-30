@@ -20,6 +20,7 @@ These are the tasks I would have liked to finish but couldn't because of time/kn
  * Add possibility to add particles mid way through the simulation
  * Add support for initial velocity of particles
  * Add GUI elements to control various aspects of the simulation
+ * Sort on the GPU
 
 ##License
 
